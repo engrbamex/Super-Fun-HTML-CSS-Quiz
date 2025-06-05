@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Super Fun HTML & CSS Quiz!</title>
-    <link rel="stylesheet" href="./style.css">
 
     <!-- We're using Tailwind CSS for quick and easy styling! -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome for icons (like delete, Google) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
     <!-- USER ID DISPLAY (Always visible for multi-user apps) -->
@@ -652,7 +651,7 @@
         // Define admin user IDs (REPLACE WITH ACTUAL ADMIN UIDs IN PRODUCTION FOR SECURITY)
         // For demonstration, you can put your own Anonymous User ID here after running the app once
         // and seeing your generated ID in the top-left corner.
-        const adminUserIds = [ "7oFXI4b1qtT9r3ZLIIV9iKfcmCl2", "9EdTKGhl9tMxYFP9yK4SLpT9VgI3"
+        const adminUserIds = [
             // Example: "your-actual-user-id-goes-here",
             // Example: "another-firebase-uid-for-admin2"
         ];
@@ -1334,10 +1333,20 @@
                     return;
                 }
 
-                // Check if db object exists and has doc and delete methods
-                if (!firebaseInitializedSuccessfully || !isAuthReady || !(db && typeof db.collection === 'function' && typeof db.collection().doc === 'function')) { // Also check collection for pathway
-                    console.error("Cannot delete score: Firebase not initialized or authenticated, or DB service not fully available. Check connection/config.");
-                    alert("Failed to delete score. Firebase connection issue.");
+                // *** NEW LOGGING FOR DEBUGGING ***
+                console.log("Attempting to delete score...");
+                console.log("firebaseInitializedSuccessfully:", firebaseInitializedSuccessfully);
+                console.log("isAuthReady:", isAuthReady);
+                console.log("db object:", db);
+                console.log("typeof db.collection:", typeof db.collection);
+                console.log("appId value:", appId);
+                console.log("scoreToDeleteDocId:", scoreToDeleteDocId);
+                // **********************************
+
+                // Check if db object exists and has collection and doc methods
+                if (!firebaseInitializedSuccessfully || !isAuthReady || !(db && typeof db.collection === 'function' && typeof db.collection().doc === 'function')) {
+                    console.error("Cannot delete score: Firebase not initialized or authenticated, or DB service methods are not fully available based on pre-checks.");
+                    alert("Failed to delete score. Firebase connection issue or service not ready.");
                     scoreToDeleteDocId = null;
                     return;
                 }
@@ -1350,15 +1359,17 @@
                     // The onSnapshot listener in loadScoreboard will automatically update the UI
                 } catch (e) {
                     console.error("Error deleting document:", e);
-                    console.error(`Firebase Error Code: ${e.code}, Message: ${e.message}`); // Log specific error details
+                    console.error(`Firebase Error Code: ${e.code || 'N/A'}, Message: ${e.message || 'No message provided by Firebase'}`); // Log specific error details
                     // Provide user feedback on deletion failure
                     let errorMessage = "Failed to delete score. Please check Firebase permissions.";
                     if (e.code === 'permission-denied') {
-                        errorMessage = `Failed to delete score: Insufficient Firebase permissions. (${e.message})`;
+                        errorMessage = `Failed to delete score: Insufficient Firebase permissions. (Firebase says: ${e.message})`;
                     } else if (e.code === 'unavailable' || e.code === 'unauthenticated') {
-                        errorMessage = `Failed to delete score: Network or authentication issue. (${e.message})`;
+                        errorMessage = `Failed to delete score: Network or authentication issue. (Firebase says: ${e.message})`;
                     } else if (e.code === 'not-found') {
                         errorMessage = "Failed to delete score: Document not found (it might have been deleted already).";
+                    } else {
+                        errorMessage = `Failed to delete score: An unexpected error occurred. (Error: ${e.message})`;
                     }
                     alert(errorMessage);
                     scoreToDeleteDocId = null; // Clear the stored ID
@@ -1446,7 +1457,7 @@
                     }
                 }, (error) => {
                     console.error("Error getting scoreboard data:", error);
-                    scoreboardList.innerHTML = `<p class="text-red-600">Error loading scores: ${escapeHTML(error.message)}. Please check Firebase permissions.</p>`;
+                    scoreboardList.innerHTML = `<p class="text-red-600">Error loading scores: ${escapeHTML(error.message)}. Please check Firebase permissions. </p>`;
                 });
             }
 
