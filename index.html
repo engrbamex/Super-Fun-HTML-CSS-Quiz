@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Fun HTML & CSS Quiz!</title>
+    <title>Super Fun Multi-Category Quiz!</title>
 
-    <!-- We're using Tailwind CSS for quick and easy styling! -->
+    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons (like delete, Google) -->
+    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="./style.css">
 </head>
@@ -17,13 +17,19 @@
         Your ID:
     </div>
 
-    <!-- SPLASH PAGE: Name Entry -->
+    <!-- SPLASH PAGE: Name Entry & Category Selection -->
     <div id="splash-page" class="splash-page-container hidden">
         <h1>Welcome, Future Coder! 👋</h1>
         <p class="text-xl mb-6 text-gray-700">What's your awesome name?</p>
         <input type="text" id="student-name-input" placeholder="Enter your name here (or sign in with Google)"
                class="w-full max-w-sm p-4 text-center text-xl border-4 border-blue-300 rounded-xl focus:outline-none focus:border-blue-500 transition duration-300">
-        <button id="start-quiz-from-splash-button" class="quiz-button mt-8">Start Your Adventure!</button>
+        
+        <div class="flex flex-col gap-4 mt-8">
+            <button id="start-html-quiz-button" class="quiz-button">Start HTML Quiz!</button>
+            <button id="start-css-quiz-button" class="quiz-button bg-green-600 hover:bg-green-700">Start CSS Quiz!</button>
+            <button id="start-js-quiz-button" class="quiz-button bg-yellow-600 hover:bg-yellow-700 text-black">Start JavaScript Quiz!</button>
+        </div>
+
         <button id="sign-in-google-button" class="quiz-button bg-red-600 hover:bg-red-700 mt-4 flex items-center justify-center mx-auto">
             <i class="fab fa-google mr-3"></i> Sign in with Google
         </button>
@@ -32,7 +38,7 @@
 
     <!-- INTRODUCTION PAGE -->
     <div id="intro-page" class="intro-page-container hidden">
-        <h1>Welcome to the Super Fun HTML & CSS Quiz! 🚀</h1>
+        <h1 id="intro-quiz-title">Welcome to the Quiz! 🚀</h1>
         <p>Are you ready to test your awesome web building knowledge?</p>
         <p class="font-semibold text-lg text-blue-700">Here's how to play:</p>
         <ul>
@@ -41,7 +47,8 @@
             <li>Once you pick an answer, you **can't change it** for that question.</li>
             <li>Click **"Next Question"** to move on, or **"Previous Question** to review.</li>
             <li>On the last question, click **"Submit Quiz!"** to see your score!</li>
-            <li>There are **50 questions** in total (randomly picked!). Good luck!</li>
+            <li>There are **20 questions** in total (randomly picked!). Good luck!</li>
+            <li>Each correct answer is worth **2 marks**!</li>
         </ul>
         <button id="start-quiz-button" class="quiz-button">Start Quiz!</button>
     </div>
@@ -71,11 +78,11 @@
     <!-- MAIN QUIZ CONTAINER (Hidden initially) -->
     <div class="quiz-container hidden">
         <div id="timer-display">30s</div>
-        <h1>Super Fun HTML & CSS Quiz! 🚀</h1>
+        <h1 id="quiz-category-title"></h1> <!-- Dynamically updated quiz title -->
         <div id="question-indicators-container">
             <!-- Question indicators will be populated here -->
         </div>
-        <div id="question-number" class="text-gray-500 text-lg mb-4">Question 1 of 50</div>
+        <div id="question-number" class="text-gray-500 text-lg mb-4">Question 1 of 20</div>
         <div id="question-display"></div>
         <div id="options-container" class="options-container"></div>
         <div id="feedback-message" class="feedback-message"></div>
@@ -89,7 +96,7 @@
         <div id="score-display"></div>
     </div>
 
-    <!-- SCOREBOARD PAGE (New) -->
+    <!-- SCOREBOARD PAGE -->
     <div id="scoreboard-page" class="quiz-container hidden">
         <h1>High Scores! 🏆</h1>
         <ul id="scoreboard-list" class="mt-8 text-left">
@@ -105,8 +112,11 @@
 
     <script>
         // IMPORTANT GLOBAL VARIABLES from the Canvas environment
-        // For local development, this needs to be your actual Firebase project configuration.
-        const appId = 'default-app-id'; // You can keep this as 'default-app-id' or use your actual app ID from Firebase
+        // It ensures that if __app_id is provided by the Canvas environment (even if it's empty), it uses it.
+        // Otherwise, it falls back to 'default-app-id'.
+        const appId = typeof __app_id !== 'undefined' && __app_id ? __app_id : 'default-app-id';
+        console.log("AppId resolved to:", appId, " (length: " + appId.length + ")");
+
 
         // YOUR ACTUAL FIREBASE PROJECT CONFIGURATION IS HERE!
         // This was provided by the user.
@@ -123,510 +133,373 @@
         const initialAuthToken = null; // Set to null for local development
 
 
-        // --- ALL 100 Quiz questions are defined here ---
-        const allQuestions = [
-            {
-                "question": "What does HTML stand for?",
-                "options": ["A. Hyper Text Markup Language", "B. Happy Text Making Language", "C. Home Tool Markup Language"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which tag is used to make the biggest heading?",
-                "options": ["A. <h1>", "B. <p>", "C. <div>"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "What does CSS stand for?",
-                "options": ["A. Colorful Style Sheets", "B. Cascading Style Sheets", "C. Creative Style System"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which tag is used to add a picture to your webpage?",
-                "options": ["A. <image>", "B. <img>", "C. <picture>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property changes the color of text?",
-                "options": ["A. text-color", "B. font-color", "C. color"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "What is the main part of an HTML document where all content goes?",
-                "options": ["A. <head>", "B. <body>", "C. <title>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property changes the background color of an element?",
-                "options": ["A. background-color", "B. color-background", "C. bg-color"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "What tag is used to make a paragraph of text?",
-                "options": ["A. <text>", "B. <paragraph>", "C. <p>"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "Which CSS property changes the size of text?",
-                "options": ["A. text-size", "B. font-size", "C. size"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What do you put around HTML tags?",
-                "options": ["A. ( )", "B. { }", "C. < >"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "Which CSS property makes text centered?",
-                "options": ["A. align-text: center", "B. text-align: center", "C. center-text: yes"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What is the correct way to link an external CSS file?",
-                "options": ["A. <link rel='stylesheet' href='style.css'>", "B. <style src='style.css'>", "C. <css>style.css</css>"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which HTML tag is used for an unordered list?",
-                "options": ["A. <list>", "B. <ol>", "C. <ul>"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "Which CSS property adds space inside an element's border?",
-                "options": ["A. margin", "B. padding", "C. space-inside"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which HTML tag is used for a list item?",
-                "options": ["A. <item>", "B. <li>", "C. <list-item>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What is the purpose of the <title> tag in HTML?",
-                "options": ["A. To make text bold", "B. To set the title of the webpage in the browser tab", "C. To create a heading"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property adds space outside an element's border?",
-                "options": ["A. margin", "B. padding", "C. outer-space"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which HTML tag is used to create a link to another page?",
-                "options": ["A. <link>", "B. <href>", "C. <a>"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "Which CSS property changes the type of font (like Arial or Times New Roman)?",
-                "options": ["A. font-type", "B. font-family", "C. text-font"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What does the `src` attribute in an `<img>` tag do?",
-                "options": ["A. Sets the image's size", "B. Tells where the image file is located", "C. Describes the image"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property makes corners round?",
-                "options": ["A. corner-round", "B. border-radius", "C. shape-round"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which HTML tag is used to make text bold or strong?",
-                "options": ["A. <bold>", "B. <strong>", "C. <big>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property adds a border around an element?",
-                "options": ["A. line", "B. frame", "C. border"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "What is the purpose of the `alt` attribute in an `<img>` tag?",
-                "options": ["A. To change the image's color", "B. To provide alternative text if the image doesn't load", "C. To make the image bigger"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property changes how wide an element is?",
-                "options": ["A. length", "B. width", "C. size-x"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which HTML tag is used to group content together?",
-                "options": ["A. <group>", "B. <section>", "C. <div>"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "Which CSS property changes how tall an element is?",
-                "options": ["A. height", "B. length-y", "C. tall"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "What is the correct tag for an ordered list (like a numbered list)?",
-                "options": ["A. <ol>", "B. <list-ordered>", "C. <num-list>"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which CSS property adds a shadow effect to a box?",
-                "options": ["A. shadow-box", "B. box-shadow", "C. drop-shadow"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What is the very first line in an HTML document?",
-                "options": ["A. <!DOCTYPE html>", "B. <start html>", "C. <html version='5'>"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which CSS property makes text italic?",
-                "options": ["A. font-style: italic", "B. text-slant", "C. italic: true"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Where do you usually put your CSS code inside an HTML file?",
-                "options": ["A. In the <body>", "B. In the <style> tags inside the <head>", "C. At the very end of the file"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What is the purpose of the `href` attribute in an `<a>` tag?",
-                "options": ["A. To change the link's color", "B. To tell where the link goes", "C. To make the link bold"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property helps to move an element from its normal position?",
-                "options": ["A. move", "B. relocate", "C. position"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "What is an HTML 'element'?",
-                "options": ["A. A picture", "B. A tag and its content", "C. A color"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property makes text uppercase?",
-                "options": ["A. text-up", "B. text-transform: uppercase", "C. big-letters"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What is the job of the `<head>` section in HTML?",
-                "options": ["A. To hold all the visible content", "B. To hold information about the page, like the title and styles", "C. To make the page beautiful"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property sets the transparency of an element?",
-                "options": ["A. see-through", "B. opacity", "C. transparency-level"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What does a closing HTML tag look like?",
-                "options": ["A. <tag/>", "B. </tag>", "C. <tag end>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property controls how elements are arranged in a row or column?",
-                "options": ["A. arrange", "B. display: flex", "C. layout"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What is the smallest heading tag?",
-                "options": ["A. <h6>", "B. <h10>", "C. <h>"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which CSS property makes a smooth change over time (like a button changing color)?",
-                "options": ["A. smooth-change", "B. animation", "C. C. transition"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "What is a 'selector' in CSS?",
-                "options": ["A. A tool to pick colors", "B. What CSS uses to pick which HTML element to style", "C. A special type of font"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which HTML tag is used for a form?",
-                "options": ["A. <form>", "B. <input>", "C. <submit>"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which CSS property adds a line underneath text?",
-                "options": ["A. underline", "B. text-decoration: underline", "C. line-under"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What type of input is used for a single choice, like in a quiz?",
-                "options": ["A. checkbox", "B. text", "C. radio"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "Which CSS property makes text bold?",
-                "options": ["A. font-weight: bold", "B. text-bold", "C. make-bold"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "What does the `id` attribute do in HTML?",
-                "options": ["A. Gives a unique name to an element", "B. Changes the element's color", "C. Hides the element"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which CSS property changes the space between letters?",
-                "options": ["A. letter-space", "B. character-spacing", "C. letter-spacing"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "What is the main purpose of HTML?",
-                "options": ["A. To make websites look pretty", "B. To give structure and content to a webpage", "C. To make websites interactive"],
-                "correctAnswer": "B"
-            },
-            // --- Additional 50 questions to reach 100 total ---
-            {
-                "question": "Which HTML tag is used to define a table?",
-                "options": ["A. <table>", "B. <tab>", "C. <tr>"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which CSS property controls the order of flexible items in a flex container?",
-                "options": ["A. order", "B. flex-order", "C. arrange-order"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "What HTML attribute specifies an alternate text for an image, if the image cannot be displayed?",
-                "options": ["A. alt", "B. title", "C. src"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which CSS property is used for positioning elements relative to their parent?",
-                "options": ["A. position: absolute", "B. position: relative", "C. display: relative"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which HTML tag is used to create a dropdown list?",
-                "options": ["A. <list>", "B. <select>", "C. <dropdown>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What CSS property would you use to change the text to all capital letters?",
-                "options": ["A. text-transform: uppercase", "B. font-caps", "C. text-style: capitalize"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which HTML element is used to specify a footer for a document or section?",
-                "options": ["A. <footer>", "B. <bottom>", "C. <foot>"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which CSS property is used to control the spacing between lines of text?",
-                "options": ["A. line-height", "B. text-spacing", "C. vertical-align"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "What is the correct HTML for inserting a line break?",
-                "options": ["A. <break>", "B. <lb>", "C. <br>"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "Which CSS property allows you to put multiple background images on an element?",
-                "options": ["A. backgrounds", "B. background-image", "C. multiple-background"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What is the purpose of the `<meta>` tag in HTML?",
-                "options": ["A. To define metadata about an HTML document", "B. To include JavaScript", "C. To create a hyperlink"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which CSS property changes the order of an element in a grid layout?",
-                "options": ["A. grid-order", "B. order", "C. grid-column-start"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which HTML tag is used to define a navigation link?",
-                "options": ["A. <nav>", "B. <navigation>", "C. <navigate>"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "How do you select an element with `id=\"demo\"` in CSS?",
-                "options": ["A. .demo", "B. #demo", "C. demo"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What HTML attribute is used to define inline styles?",
-                "options": ["A. styles", "B. class", "C. style"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "Which CSS property is used to specify the type of cursor to be displayed?",
-                "options": ["A. cursor", "B. mouse-pointer", "C. pointer-type"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which HTML element is used for short quotes?",
-                "options": ["A. <quote>", "B. <q>", "C. <blockquot>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property can hide an element while keeping its space?",
-                "options": ["A. display: none", "B. visibility: hidden", "C. opacity: 0"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which HTML element is used to play audio files?",
-                "options": ["A. <sound>", "B. <audio>", "C. <mp3>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property defines the horizontal and vertical gaps between grid items?",
-                "options": ["A. grid-gap", "B. gap", "C. column-gap"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What is the purpose of the `placeholder` attribute in `<input>`?",
-                "options": ["A. To set a default value", "B. To show a hint in the input field", "C. To define a required field"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS value for `display` makes an element behave like a block-level element and inline-level element?",
-                "options": ["A. block-inline", "B. inline-block", "C. flex"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which HTML element is used for client-side JavaScript?",
-                "options": ["A. <javascript>", "B. <script>", "C. <js>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property controls the space between characters?",
-                "options": ["A. char-spacing", "B. letter-spacing", "C. word-spacing"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which HTML tag is used for a section of content?",
-                "options": ["A. <part>", "B. <section>", "C. <area>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property defines the flexibility of a flex item?",
-                "options": ["A. flex", "B. flex-grow", "C. grow"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which HTML attribute specifies the URL of the page the link goes to?",
-                "options": ["A. url", "B. href", "C. link"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property can apply a visual effect like blur or grayscale?",
-                "options": ["A. effect", "B. filter", "C. graphic-effect"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which HTML element is used for a video file?",
-                "options": ["A. <movie>", "B. <media>", "C. <video>"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "Which CSS property is used to create sticky positioning?",
-                "options": ["A. position: sticky", "B. stick-position", "C. attach: sticky"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "What does the `<ol>` tag represent?",
-                "options": ["A. Ordered List", "B. Old List", "C. Option List"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which CSS pseudo-class matches elements when the user interacts with them, like clicking?",
-                "options": ["A. :active", "B. :click", "C. :press"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which HTML attribute is used to group related input fields?",
-                "options": ["A. <group>", "B. <fieldset>", "C. <form-group>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property is used to specify the background color of a selected text?",
-                "options": ["A. text-highlight-color", "B. selection-background-color", "C. ::selection background-color"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "Which HTML tag is used to define emphasized text?",
-                "options": ["A. <i>", "B. <em>", "C. <italic>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What is the default value of the `position` property in CSS?",
-                "options": ["A. relative", "B. absolute", "C. static"],
-                "correctAnswer": "C"
-            },
-            {
-                "question": "Which HTML element is used to define important text?",
-                "options": ["A. <important>", "B. <strong>", "C. <bold>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property is used to set the type of text decoration (like underline, overline, line-through)?",
-                "options": ["A. text-style", "B. text-decoration", "C. text-line"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which HTML element is used to draw graphics, on the fly, via scripting?",
-                "options": ["A. <canvas>", "B. <graphic>", "C. <draw>"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which CSS property controls how content that is too large for its box is handled?",
-                "options": ["A. overflow", "B. content-overflow", "C. scroll"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "What is the purpose of the `target=\"_blank\"` attribute in an `<a>` tag?",
-                "options": ["A. Opens the linked document in a new window/tab", "B. Opens in the same window", "C. Downloads the linked document"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which CSS property is used to adjust the image within its container, usually for background images?",
-                "options": ["A. background-position", "B. background-align", "C. background-move"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which HTML tag is used to define preformatted text?",
-                "options": ["A. <format>", "B. <pre>", "C. <text-block>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property can be used to set a maximum width for an image, preventing it from overflowing?",
-                "options": ["A. max-width", "B. image-width", "C. fit-width"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which HTML element is used for comments that are not displayed in the browser?",
-                "options": ["A. // Comment //", "B. <!-- Comment -->", "C. <comment>"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property sets the order of overlapping elements?",
-                "options": ["A. layer-index", "B. z-index", "C. depth-order"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which HTML element is used to define a caption for a <figure> element?",
-                "options": ["A. <figcaption>", "B. <figure-caption>", "C. <caption-figure>"],
-                "correctAnswer": "A"
-            },
-            {
-                "question": "Which CSS property controls the shape of the area to which a background is painted?",
-                "options": ["A. background-origin", "B. background-clip", "C. background-shape"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "What is the purpose of the `autofocus` attribute in HTML?",
-                "options": ["A. Automatically submits the form", "B. Automatically places the cursor in the input field when the page loads", "C. Auto-fills the input field"],
-                "correctAnswer": "B"
-            },
-            {
-                "question": "Which CSS property is used to specify a stack of fonts to be used?",
-                "options": ["A. font-stack", "B. font-family", "C. font-collection"],
-                "correctAnswer": "B"
-            }
+        // --- ALL 100 HTML Quiz questions are defined here ---
+        const htmlQuestions = [
+            { "question": "What does HTML stand for?", "options": ["A. Hyper Text Markup Language", "B. Happy Text Making Language", "C. Home Tool Markup Language"], "correctAnswer": "A" },
+            { "question": "Which tag is used to make the biggest heading?", "options": ["A. <h1>", "B. <p>", "C. <div>"], "correctAnswer": "A" },
+            { "question": "Which tag is used to add a picture to your webpage?", "options": ["A. <image>", "B. <img>", "C. <picture>"], "correctAnswer": "B" },
+            { "question": "What is the main part of an HTML document where all content goes?", "options": ["A. <head>", "B. <body>", "C. <title>"], "correctAnswer": "B" },
+            { "question": "What tag is used to make a paragraph of text?", "options": ["A. <text>", "B. <paragraph>", "C. <p>"], "correctAnswer": "C" },
+            { "question": "What do you put around HTML tags?", "options": ["A. ( )", "B. { }", "C. < >"], "correctAnswer": "C" },
+            { "question": "Which HTML tag is used for an unordered list?", "options": ["A. <list>", "B. <ol>", "C. <ul>"], "correctAnswer": "C" },
+            { "question": "Which HTML tag is used for a list item?", "options": ["A. <item>", "B. <li>", "C. <list-item>"], "correctAnswer": "B" },
+            { "question": "What is the purpose of the <title> tag in HTML?", "options": ["A. To make text bold", "B. To set the title of the webpage in the browser tab", "C. To create a heading"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to create a link to another page?", "options": ["A. <link>", "B. <href>", "C. <a>"], "correctAnswer": "C" },
+            { "question": "What does the `src` attribute in an `<img>` tag do?", "options": ["A. Sets the image's size", "B. Tells where the image file is located", "C. Describes the image"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to make text bold or strong?", "options": ["A. <bold>", "B. <strong>", "C. <big>"], "correctAnswer": "B" },
+            { "question": "What is the purpose of the `alt` attribute in an `<img>` tag?", "options": ["A. To change the image's color", "B. To provide alternative text if the image doesn't load", "C. To make the image bigger"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to group content together?", "options": ["A. <group>", "B. <section>", "C. <div>"], "correctAnswer": "C" },
+            { "question": "What is the correct tag for an ordered list (like a numbered list)?", "options": ["A. <ol>", "B. <list-ordered>", "C. <num-list>"], "correctAnswer": "A" },
+            { "question": "What is the very first line in an HTML document?", "options": ["A. <!DOCTYPE html>", "B. <start html>", "C. <html version='5'>"], "correctAnswer": "A" },
+            { "question": "What is the purpose of the `href` attribute in an `<a>` tag?", "options": ["A. To change the link's color", "B. To tell where the link goes", "C. To make the link bold"], "correctAnswer": "B" },
+            { "question": "What is an HTML 'element'?", "options": ["A. A picture", "B. A tag and its content", "C. A color"], "correctAnswer": "B" },
+            { "question": "What is the job of the `<head>` section in HTML?", "options": ["A. To hold all the visible content", "B. To hold information about the page, like the title and styles", "C. To make the page beautiful"], "correctAnswer": "B" },
+            { "question": "What does a closing HTML tag look like?", "options": ["A. <tag/>", "B. </tag>", "C. <tag end>"], "correctAnswer": "B" },
+            { "question": "What is the smallest heading tag?", "options": ["A. <h6>", "B. <h10>", "C. <h>"], "correctAnswer": "A" },
+            { "question": "What is a 'selector' in CSS?", "options": ["A. A tool to pick colors", "B. What CSS uses to pick which HTML element to style", "C. A special type of font"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used for a form?", "options": ["A. <form>", "B. <input>", "C. <submit>"], "correctAnswer": "A" },
+            { "question": "What type of input is used for a single choice, like in a quiz?", "options": ["A. checkbox", "B. text", "C. radio"], "correctAnswer": "C" },
+            { "question": "What does the `id` attribute do in HTML?", "options": ["A. Gives a unique name to an element", "B. Changes the element's color", "C. Hides the element"], "correctAnswer": "A" },
+            { "question": "What is the main purpose of HTML?", "options": ["A. To make websites look pretty", "B. To give structure and content to a webpage", "C. To make websites interactive"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to define a table?", "options": ["A. <table>", "B. <tab>", "C. <tr>"], "correctAnswer": "A" },
+            { "question": "What HTML attribute specifies an alternate text for an image, if the image cannot be displayed?", "options": ["A. alt", "B. title", "C. src"], "correctAnswer": "A" },
+            { "question": "Which HTML tag is used to create a dropdown list?", "options": ["A. <list>", "B. <select>", "C. <dropdown>"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to specify a footer for a document or section?", "options": ["A. <footer>", "B. <bottom>", "C. <foot>"], "correctAnswer": "A" },
+            { "question": "What is the correct HTML for inserting a line break?", "options": ["A. <break>", "B. <lb>", "C. <br>"], "correctAnswer": "C" },
+            { "question": "What is the purpose of the `<meta>` tag in HTML?", "options": ["A. To define metadata about an HTML document", "B. To include JavaScript", "C. To create a hyperlink"], "correctAnswer": "A" },
+            { "question": "Which HTML tag is used to define a navigation link?", "options": ["A. <nav>", "B. <navigation>", "C. <navigate>"], "correctAnswer": "A" },
+            { "question": "What HTML attribute is used to define inline styles?", "options": ["A. styles", "B. class", "C. style"], "correctAnswer": "C" },
+            { "question": "Which HTML element is used for short quotes?", "options": ["A. <quote>", "B. <q>", "C. <blockquot>"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to play audio files?", "options": ["A. <sound>", "B. <audio>", "C. <mp3>"], "correctAnswer": "B" },
+            { "question": "What is the purpose of the `placeholder` attribute in `<input>`?", "options": ["A. To set a default value", "B. To show a hint in the input field", "C. To define a required field"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used for client-side JavaScript?", "options": ["A. <javascript>", "B. <script>", "C. <js>"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used for a section of content?", "options": ["A. <part>", "B. <section>", "C. <area>"], "correctAnswer": "B" },
+            { "question": "Which HTML attribute specifies the URL of the page the link goes to?", "options": ["A. url", "B. href", "C. link"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used for a video file?", "options": ["A. <movie>", "B. <media>", "C. <video>"], "correctAnswer": "C" },
+            { "question": "What does the `<ol>` tag represent?", "options": ["A. Ordered List", "B. Old List", "C. Option List"], "correctAnswer": "A" },
+            { "question": "Which HTML attribute is used to group related input fields?", "options": ["A. <group>", "B. <fieldset>", "C. <form-group>"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to define emphasized text?", "options": ["A. <i>", "B. <em>", "C. <italic>"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to define important text?", "options": ["A. <important>", "B. <strong>", "C. <bold>"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to draw graphics, on the fly, via scripting?", "options": ["A. <canvas>", "B. <graphic>", "C. <draw>"], "correctAnswer": "A" },
+            { "question": "What is the purpose of the `target=\"_blank\"` attribute in an `<a>` tag?", "options": ["A. Opens the linked document in a new window/tab", "B. Opens in the same window", "C. Downloads the linked document"], "correctAnswer": "A" },
+            { "question": "Which HTML tag is used to define preformatted text?", "options": ["A. <format>", "B. <pre>", "C. <text-block>"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used for comments that are not displayed in the browser?", "options": ["A. // Comment //", "B. <!-- Comment -->", "C. <comment>"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to define a caption for a <figure> element?", "options": ["A. <figcaption>", "B. <figure-caption>", "C. <caption-figure>"], "correctAnswer": "A" },
+            { "question": "What is the purpose of the `autofocus` attribute in HTML?", "options": ["A. Automatically submits the form", "B. Automatically places the cursor in the input field when the page loads", "C. Auto-fills the input field"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used for the smallest heading level?", "options": ["A. <h6>", "B. <h7>", "C. <h0>"], "correctAnswer": "A" },
+            { "question": "Which HTML attribute specifies the document's character encoding?", "options": ["A. charset", "B. encoding", "C. char-type"], "correctAnswer": "A" },
+            { "question": "Which HTML element is used for marking up programming code?", "options": ["A. <codeblock>", "B. <pre>", "C. <code>"], "correctAnswer": "C" },
+            { "question": "To include an image as a clickable link, which tags would you nest?", "options": ["A. <img> inside <a>", "B. <a> inside <img>", "C. <link> inside <img>"], "correctAnswer": "A" },
+            { "question": "Which HTML tag is used to define an abbreviation or an acronym?", "options": ["A. <abbr>", "B. <acronym>", "C. <short>"], "correctAnswer": "A" },
+            { "question": "Which HTML tag is used to define a client-side image map?", "options": ["A. <map>", "B. <imagemap>", "C. <area>"], "correctAnswer": "A" },
+            { "question": "Which HTML element defines a navigation section?", "options": ["A. <navigation>", "B. <nav>", "C. <links>"], "correctAnswer": "B" },
+            { "question": "What HTML attribute defines a tooltip for an element?", "options": ["A. hint", "B. title", "C. alt"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used for a block quotation?", "options": ["A. <quote>", "B. <blockquote>", "C. <q>"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to provide an alternative for users who do not support iframes?", "options": ["A. <noiframe>", "B. <framefallback>", "C. <noframes>"], "correctAnswer": "C" },
+            { "question": "Which HTML attribute specifies that an input field should be disabled?", "options": ["A. inactive", "B. disabled", "C. readonly"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to define a short inline quotation?", "options": ["A. <q>", "B. <quote>", "C. <citation>"], "correctAnswer": "A" },
+            { "question": "What is the purpose of the `<head>` section in an HTML document?", "options": ["A. To display the main content", "B. To contain meta-information about the document", "C. To create headings"], "correctAnswer": "B" },
+            { "question": "Which HTML element defines a part of an HTML document as a hyperlink?", "options": ["A. <link>", "B. <a>", "C. <hyper>"], "correctAnswer": "B" },
+            { "question": "Which HTML attribute specifies the column span for a table cell?", "options": ["A. colspan", "B. rowspan", "C. cellspan"], "correctAnswer": "A" },
+            { "question": "Which HTML element is used to define keyboard input?", "options": ["A. <keyboard>", "B. <kbd>", "C. <input>"], "correctAnswer": "B" },
+            { "question": "Which HTML attribute is used to specify the initial value for an input field?", "options": ["A. start", "B. value", "C. initial"], "correctAnswer": "B" },
+            { "question": "Which HTML element represents a list of description terms?", "options": ["A. <dl>", "B. <dd>", "C. <dt>"], "correctAnswer": "A" },
+            { "question": "Which HTML tag is used to define an address information for the author/owner of a document?", "options": ["A. <contact>", "B. <address>", "C. <info>"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used for creating sections within HTML document, like chapters or articles?", "options": ["A. <part>", "B. <article>", "C. <section>"], "correctAnswer": "B" },
+            { "question": "Which HTML tag represents the content within a `<figure>` element?", "options": ["A. <figcontent>", "B. <figcaption>", "C. <figuretext>"], "correctAnswer": "B" },
+            { "question": "What is the correct HTML for referring to an external style sheet?", "options": ["A. <style src='mystyle.css'>", "B. <link rel='stylesheet' href='mystyle.css'>", "C. <stylesheet>mystyle.css</stylesheet>"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to display a scalar measurement within a known range?", "options": ["A. <range>", "B. <meter>", "C. <progress>"], "correctAnswer": "B" },
+            { "question": "Which HTML attribute specifies a unique ID for an element?", "options": ["A. class", "B. name", "C. id"], "correctAnswer": "C" },
+            { "question": "What HTML attribute defines the number of rows a textarea should display?", "options": ["A. cols", "B. rows", "C. size"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to define header content within a document or section?", "options": ["A. <head>", "B. <header>", "C. <top>"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to contain a set of navigation links?", "options": ["A. <menu>", "B. <nav>", "C. <links>"], "correctAnswer": "B" },
+            { "question": "Which HTML attribute specifies the pattern that an input element's value is checked against?", "options": ["A. format", "B. regex", "C. pattern"], "correctAnswer": "C" },
+            { "question": "Which HTML element is used to provide captions for track elements in media?", "options": ["A. <subtitle>", "B. <track>", "C. <captiontext>"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to define a progress bar?", "options": ["A. <meter>", "B. <progress>", "C. <bar>"], "correctAnswer": "B" },
+            { "question": "What is the purpose of the `name` attribute in form elements?", "options": ["A. To display a label", "B. To uniquely identify the element for submission", "C. To style the element"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to define descriptive text for an image or video?", "options": ["A. <label>", "B. <figcaption>", "C. <summary>"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to mark text as no longer correct or relevant?", "options": ["A. <delete>", "B. <del>", "C. <strike>"], "correctAnswer": "B" },
+            { "question": "Which HTML tag defines a date/time?", "options": ["A. <time>", "B. <datetime>", "C. <date>"], "correctAnswer": "A" },
+            { "question": "Which HTML attribute specifies the type of input a form field should be?", "options": ["A. kind", "B. format", "C. type"], "correctAnswer": "C" },
+            { "question": "Which HTML element specifies an external resource (like a favicon or stylesheet)?", "options": ["A. <src>", "B. <link>", "C. <href>"], "correctAnswer": "B" },
+            { "question": "Which HTML element represents an independent piece of content, like a blog post?", "options": ["A. <section>", "B. <article>", "C. <main>"], "correctAnswer": "B" },
+            { "question": "What is the correct HTML for a line break?", "options": ["A. <break>", "B. <br>", "C. <lb>"], "correctAnswer": "B" },
+            { "question": "Which HTML attribute indicates that an input field is required to be filled?", "options": ["A. compulsory", "B. mandatory", "C. required"], "correctAnswer": "C" },
+            { "question": "Which HTML element provides a container for content, typically used for styling with CSS?", "options": ["A. <section>", "B. <div>", "C. <group>"], "correctAnswer": "B" },
+            { "question": "Which HTML element defines a list item in a description list?", "options": ["A. <dd>", "B. <dt>", "C. <li>"], "correctAnswer": "A" },
+            { "question": "What HTML tag is used for metadata information about a document?", "options": ["A. <meta>", "B. <info>", "C. <data>"], "correctAnswer": "A" },
+            { "question": "Which HTML element defines the header for a table?", "options": ["A. <th>", "B. <td>", "C. <tr>"], "correctAnswer": "A" },
+            { "question": "Which HTML attribute is used to specify the initial number for an ordered list?", "options": ["A. first", "B. start", "C. initial"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to display a smaller text?", "options": ["A. <small>", "B. <tiny>", "C. <little>"], "correctAnswer": "A" },
+            { "question": "What HTML attribute defines the row span for a table cell?", "options": ["A. colspan", "B. rowspan", "C. cellspan"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to define an inline style sheet?", "options": ["A. <css>", "B. <link>", "C. <style>"], "correctAnswer": "C" },
+            { "question": "Which HTML element specifies a pre-formatted text?", "options": ["A. <format>", "B. <pre>", "C. <text-block>"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to embed audio content?", "options": ["A. <sound>", "B. <audio>", "C. <media>"], "correctAnswer": "B" },
+            { "question": "What is the correct HTML for the largest heading?", "options": ["A. <head>", "B. <h1>", "C. <h6>"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to create a definition term in a description list?", "options": ["A. <dt>", "B. <dd>", "C. <dl>"], "correctAnswer": "A" },
+            { "question": "Which HTML element defines an iframe?", "options": ["A. <frame>", "B. <iframe>", "C. <insertframe>"], "correctAnswer": "B" },
+            { "question": "Which HTML attribute specifies the width of an image?", "options": ["A. size", "B. dimension", "C. width"], "correctAnswer": "C" },
+            { "question": "Which HTML tag specifies a form?", "options": ["A. <input>", "B. <form>", "C. <button>"], "correctAnswer": "B" },
+            { "question": "Which HTML tag defines a table row?", "options": ["A. <td>", "B. <th>", "C. <tr>"], "correctAnswer": "C" },
+            { "question": "What HTML attribute specifies the height of an image?", "options": ["A. size", "B. height", "C. dimension"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to group related elements in a form?", "options": ["A. <group>", "B. <fieldset>", "C. <formgroup>"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to define a standard data cell in a table?", "options": ["A. <th>", "B. <td>", "C. <tr>"], "correctAnswer": "B" },
+            { "question": "Which HTML element defines a section of related content, often with a heading?", "options": ["A. <article>", "B. <section>", "C. <div>"], "correctAnswer": "B" },
+            { "question": "What is the purpose of the `action` attribute in a form tag?", "options": ["A. To specify the CSS file", "B. To define where the form data is sent upon submission", "C. To change the form's appearance"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to draw graphics?", "options": ["A. <svg>", "B. <canvas>", "C. <picture>"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to define a select (dropdown) list?", "options": ["A. <option>", "B. <list>", "C. <select>"], "correctAnswer": "C" },
+            { "question": "What HTML attribute makes an element read-only?", "options": ["A. locked", "B. readonly", "C. static"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used to embed video content?", "options": ["A. <movie>", "B. <video>", "C. <media>"], "correctAnswer": "B" },
+            { "question": "Which HTML attribute specifies a regular expression to validate an input?", "options": ["A. validate", "B. pattern", "C. regex"], "correctAnswer": "B" },
+            { "question": "Which HTML tag defines a span of text with an inline style?", "options": ["A. <p>", "B. <span>", "C. <div>"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used for embedding external content from another source?", "options": ["A. <include>", "B. <embed>", "C. <object>"], "correctAnswer": "B" },
+            { "question": "Which HTML tag defines an individual item within an ordered or unordered list?", "options": ["A. <item>", "B. <li>", "C. <listitem>"], "correctAnswer": "B" },
+            { "question": "What HTML attribute defines the maximum length of text input?", "options": ["A. maxlen", "B. maxlength", "C. size"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used for marking up a sidebar or tangential content?", "options": ["A. <aside>", "B. <sidebar>", "C. <column>"], "correctAnswer": "A" },
+            { "question": "Which HTML tag defines the header for a webpage or section?", "options": ["A. <head>", "B. <header>", "C. <top>"], "correctAnswer": "B" },
+            { "question": "What HTML attribute specifies the URL of the linked document?", "options": ["A. link", "B. href", "C. url"], "correctAnswer": "B" },
+            { "question": "Which HTML tag is used to create a button?", "options": ["A. <input type='button'>", "B. <btn>", "C. <button>"], "correctAnswer": "C" },
+            { "question": "Which HTML element is used for highlighting text?", "options": ["A. <highlight>", "B. <mark>", "C. <strong_text>"], "correctAnswer": "B" },
+            { "question": "What HTML attribute defines the text direction of an element?", "options": ["A. dir", "B. text-direction", "C. orientation"], "correctAnswer": "A" },
+            { "question": "Which HTML tag is used to define an inline image?", "options": ["A. <image>", "B. <img>", "C. <picture>"], "correctAnswer": "B" },
+            { "question": "Which HTML element defines a form field for file uploads?", "options": ["A. <input type='file'>", "B. <upload>", "C. <fileinput>"], "correctAnswer": "A" },
+            { "question": "What is the correct HTML tag to display a scrolling text?", "options": ["A. <scroll>", "B. <marquee>", "C. <textscroll>"], "correctAnswer": "B" },
+            { "question": "Which HTML element represents the main content of the <body> of a document?", "options": ["A. <body_content>", "B. <main>", "C. <content>"], "correctAnswer": "B" },
+            { "question": "Which HTML tag defines a table caption?", "options": ["A. <thead>", "B. <caption>", "C. <th>"], "correctAnswer": "B" },
+            { "question": "Which HTML attribute is used to provide a default value for a text input field?", "options": ["A. placeholder", "B. default", "C. initial_value"], "correctAnswer": "A" },
+            { "question": "Which HTML tag is used to define a subscript text?", "options": ["A. <sup>", "B. <sub>", "C. <sup>sub</sup>"], "correctAnswer": "B" },
+            { "question": "Which HTML element is used for specifying options in a dropdown list?", "options": ["A. <list_item>", "B. <select_item>", "C. <option>"], "correctAnswer": "C" }
         ];
+
+        // --- ALL 100 CSS Quiz questions are defined here ---
+        const cssQuestions = [
+            { "question": "What does CSS stand for?", "options": ["A. Colorful Style Sheets", "B. Cascading Style Sheets", "C. Creative Style System"], "correctAnswer": "B" },
+            { "question": "Which CSS property changes the color of text?", "options": ["A. text-color", "B. font-color", "C. color"], "correctAnswer": "C" },
+            { "question": "Which CSS property changes the background color of an element?", "options": ["A. background-color", "B. color-background", "C. bg-color"], "correctAnswer": "A" },
+            { "question": "Which CSS property changes the size of text?", "options": ["A. text-size", "B. font-size", "C. size"], "correctAnswer": "B" },
+            { "question": "Which CSS property makes text centered?", "options": ["A. align-text: center", "B. text-align: center", "C. center-text: yes"], "correctAnswer": "B" },
+            { "question": "Which CSS property adds space inside an element's border?", "options": ["A. margin", "B. padding", "C. space-inside"], "correctAnswer": "B" },
+            { "question": "Which CSS property adds space outside an element's border?", "options": ["A. margin", "B. padding", "C. outer-space"], "correctAnswer": "A" },
+            { "question": "Which CSS property changes the type of font (like Arial or Times New Roman)?", "options": ["A. font-type", "B. font-family", "C. text-font"], "correctAnswer": "B" },
+            { "question": "Which CSS property makes corners round?", "options": ["A. corner-round", "B. border-radius", "C. shape-round"], "correctAnswer": "B" },
+            { "question": "Which CSS property adds a border around an element?", "options": ["A. line", "B. frame", "C. border"], "correctAnswer": "C" },
+            { "question": "Which CSS property changes how wide an element is?", "options": ["A. length", "B. width", "C. size-x"], "correctAnswer": "B" },
+            { "question": "Which CSS property changes how tall an element is?", "options": ["A. height", "B. length-y", "C. tall"], "correctAnswer": "A" },
+            { "question": "Which CSS property adds a shadow effect to a box?", "options": ["A. shadow-box", "B. box-shadow", "C. drop-shadow"], "correctAnswer": "B" },
+            { "question": "Which CSS property makes text italic?", "options": ["A. font-style: italic", "B. text-slant", "C. italic: true"], "correctAnswer": "A" },
+            { "question": "Where do you usually put your CSS code inside an HTML file?", "options": ["A. In the <body>", "B. In the <style> tags inside the <head>", "C. At the very end of the file"], "correctAnswer": "B" },
+            { "question": "Which CSS property helps to move an element from its normal position?", "options": ["A. move", "B. relocate", "C. position"], "correctAnswer": "C" },
+            { "question": "Which CSS property makes text uppercase?", "options": ["A. text-up", "B. text-transform: uppercase", "C. big-letters"], "correctAnswer": "B" },
+            { "question": "Which CSS property sets the transparency of an element?", "options": ["A. see-through", "B. opacity", "C. transparency-level"], "correctAnswer": "B" },
+            { "question": "Which CSS property controls how elements are arranged in a row or column?", "options": ["A. arrange", "B. display: flex", "C. layout"], "correctAnswer": "B" },
+            { "question": "Which CSS property makes a smooth change over time (like a button changing color)?", "options": ["A. smooth-change", "B. animation", "C. transition"], "correctAnswer": "C" },
+            { "question": "Which CSS property adds a line underneath text?", "options": ["A. underline", "B. text-decoration: underline", "C. line-under"], "correctAnswer": "B" },
+            { "question": "Which CSS property makes text bold?", "options": ["A. font-weight: bold", "B. text-bold", "C. make-bold"], "correctAnswer": "A" },
+            { "question": "Which CSS property changes the space between letters?", "options": ["A. letter-space", "B. character-spacing", "C. letter-spacing"], "correctAnswer": "C" },
+            { "question": "Which CSS property controls the order of flexible items in a flex container?", "options": ["A. order", "B. flex-order", "C. arrange-order"], "correctAnswer": "A" },
+            { "question": "Which CSS property is used for positioning elements relative to their parent?", "options": ["A. position: absolute", "B. position: relative", "C. display: relative"], "correctAnswer": "B" },
+            { "question": "What CSS property would you use to change the text to all capital letters?", "options": ["A. text-transform: uppercase", "B. font-caps", "C. text-style: capitalize"], "correctAnswer": "A" },
+            { "question": "Which CSS property is used to control the spacing between lines of text?", "options": ["A. line-height", "B. text-spacing", "C. vertical-align"], "correctAnswer": "A" },
+            { "question": "Which CSS property allows you to put multiple background images on an element?", "options": ["A. backgrounds", "B. background-image", "C. multiple-background"], "correctAnswer": "B" },
+            { "question": "Which CSS property changes the order of an element in a grid layout?", "options": ["A. grid-order", "B. order", "C. grid-column-start"], "correctAnswer": "B" },
+            { "question": "How do you select an element with `id=\"demo\"` in CSS?", "options": ["A. .demo", "B. #demo", "C. demo"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used to specify the type of cursor to be displayed?", "options": ["A. cursor", "B. mouse-pointer", "C. pointer-type"], "correctAnswer": "A" },
+            { "question": "Which CSS property can hide an element while keeping its space?", "options": ["A. display: none", "B. visibility: hidden", "C. opacity: 0"], "correctAnswer": "B" },
+            { "question": "Which CSS property defines the horizontal and vertical gaps between grid items?", "options": ["A. grid-gap", "B. gap", "C. column-gap"], "correctAnswer": "B" },
+            { "question": "Which CSS value for `display` makes an element behave like a block-level element and inline-level element?", "options": ["A. block-inline", "B. inline-block", "C. flex"], "correctAnswer": "B" },
+            { "question": "Which CSS property controls the space between characters?", "options": ["A. char-spacing", "B. letter-spacing", "C. word-spacing"], "correctAnswer": "B" },
+            { "question": "Which CSS property defines the flexibility of a flex item?", "options": ["A. flex", "B. flex-grow", "C. grow"], "correctAnswer": "A" },
+            { "question": "Which CSS property can apply a visual effect like blur or grayscale?", "options": ["A. effect", "B. filter", "C. graphic-effect"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used to create sticky positioning?", "options": ["A. position: sticky", "B. stick-position", "C. attach: sticky"], "correctAnswer": "A" },
+            { "question": "Which CSS pseudo-class matches elements when the user interacts with them, like clicking?", "options": ["A. :active", "B. :click", "C. :press"], "correctAnswer": "A" },
+            { "question": "Which CSS property is used to specify the background color of a selected text?", "options": ["A. text-highlight-color", "B. selection-background-color", "C. ::selection background-color"], "correctAnswer": "C" },
+            { "question": "What is the default value of the `position` property in CSS?", "options": ["A. relative", "B. absolute", "C. static"], "correctAnswer": "C" },
+            { "question": "Which CSS property is used to set the type of text decoration (like underline, overline, line-through)?", "options": ["A. text-style", "B. text-decoration", "C. text-line"], "correctAnswer": "B" },
+            { "question": "Which CSS property controls how content that is too large for its box is handled?", "options": ["A. overflow", "B. content-overflow", "C. scroll"], "correctAnswer": "A" },
+            { "question": "Which CSS property is used to adjust the image within its container, usually for background images?", "options": ["A. background-position", "B. background-align", "C. background-move"], "correctAnswer": "A" },
+            { "question": "Which CSS property can be used to set a maximum width for an image, preventing it from overflowing?", "options": ["A. max-width", "B. image-width", "C. fit-width"], "correctAnswer": "A" },
+            { "question": "Which CSS property sets the order of overlapping elements?", "options": ["A. layer-index", "B. z-index", "C. depth-order"], "correctAnswer": "B" },
+            { "question": "Which CSS property controls the shape of the area to which a background is painted?", "options": ["A. background-origin", "B. background-clip", "C. background-shape"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used to specify a stack of fonts to be used?", "options": ["A. font-stack", "B. font-family", "C. font-collection"], "correctAnswer": "B" },
+            { "question": "Which CSS property defines the space between cells in a table?", "options": ["A. cell-spacing", "B. border-spacing", "C. table-space"], "correctAnswer": "B" },
+            { "question": "Which CSS property would you use to change the font weight to normal?", "options": ["A. font-weight: normal", "B. text-weight: normal", "C. weight: normal"], "correctAnswer": "A" },
+            { "question": "Which CSS property is used to align the content vertically within an element?", "options": ["A. text-align", "B. vertical-align", "C. align-content"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used to specify the background size of an element?", "options": ["A. background-size", "B. bg-size", "C. size-background"], "correctAnswer": "A" },
+            { "question": "Which CSS property allows you to create flexible and responsive layouts?", "options": ["A. display: grid", "B. display: flex", "C. display: block"], "correctAnswer": "B" },
+            { "question": "Which CSS property specifies the initial value of the display property for an element?", "options": ["A. initial-display", "B. display-mode", "C. display"], "correctAnswer": "C" },
+            { "question": "Which CSS pseudo-class matches elements when the user hovers over them?", "options": ["A. :active", "B. :focus", "C. :hover"], "correctAnswer": "C" },
+            { "question": "Which CSS property is used to make text uppercase?", "options": ["A. text-transform: uppercase", "B. text-case: upper", "C. font-case: upper"], "correctAnswer": "A" },
+            { "question": "Which CSS property defines the space between words?", "options": ["A. letter-spacing", "B. word-spacing", "C. text-spacing"], "correctAnswer": "B" },
+            { "question": "Which CSS property controls the visibility of an element without removing its space?", "options": ["A. display: none", "B. visibility: hidden", "C. opacity: 0"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used to create a scrolling effect for content that overflows its container?", "options": ["A. scroll", "B. overflow", "C. scroll-behavior"], "correctAnswer": "B" },
+            { "question": "Which CSS property allows you to specify a shorthand for background properties?", "options": ["A. bg", "B. background", "C. background-shorthand"], "correctAnswer": "B" },
+            { "question": "Which CSS property specifies the blend mode of an element's background image?", "options": ["A. background-mode", "B. background-blend-mode", "C. bg-blend"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used to remove the underline from a link?", "options": ["A. text-decoration: none", "B. underline: none", "C. text-line: none"], "correctAnswer": "A" },
+            { "question": "Which CSS property specifies the alignment of text within its element?", "options": ["A. align", "B. text-align", "C. content-align"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used for styling lists, such as changing bullet points?", "options": ["A. list-style", "B. list-type", "C. list-decoration"], "correctAnswer": "A" },
+            { "question": "Which CSS property specifies the indentation of the first line of a text block?", "options": ["A. text-indent", "B. first-line-indent", "C. indent"], "correctAnswer": "A" },
+            { "question": "Which CSS property applies a blur effect to an image?", "options": ["A. filter: blur()", "B. blur-image", "C. image-filter"], "correctAnswer": "A" },
+            { "question": "Which CSS property is used to set the spacing between characters in a text?", "options": ["A. letter-spacing", "B. char-spacing", "C. font-spacing"], "correctAnswer": "A" },
+            { "question": "Which CSS property is used to control the flow of text around floated elements?", "options": ["A. wrap", "B. clear", "C. float-clear"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used to define a custom font for a webpage?", "options": ["A. @font-face", "B. font-import", "C. custom-font"], "correctAnswer": "A" },
+            { "question": "Which CSS property sets the width of an element, including padding and border?", "options": ["A. width", "B. total-width", "C. box-sizing: border-box"], "correctAnswer": "C" },
+            { "question": "Which CSS property is used to make text uppercase?", "options": ["A. text-transform: uppercase", "B. font-caps", "C. text-style: capitalize"], "correctAnswer": "A" },
+            { "question": "Which CSS property would you use to change the font weight to normal?", "options": ["A. font-weight: normal", "B. text-weight: normal", "C. weight: normal"], "correctAnswer": "A" },
+            { "question": "Which CSS property is used to align the content vertically within an element?", "options": ["A. text-align", "B. vertical-align", "C. align-content"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used to specify the background size of an element?", "options": ["A. background-size", "B. bg-size", "C. size-background"], "correctAnswer": "A" },
+            { "question": "Which CSS property allows you to create flexible and responsive layouts?", "options": ["A. display: grid", "B. display: flex", "C. display: block"], "correctAnswer": "B" },
+            { "question": "Which CSS property specifies the initial value of the display property for an element?", "options": ["A. initial-display", "B. display-mode", "C. display"], "correctAnswer": "C" },
+            { "question": "Which CSS pseudo-class matches elements when the user hovers over them?", "options": ["A. :active", "B. :focus", "C. :hover"], "correctAnswer": "C" },
+            { "question": "Which CSS property is used to make text uppercase?", "options": ["A. text-transform: uppercase", "B. text-case: upper", "C. font-case: upper"], "correctAnswer": "A" },
+            { "question": "Which CSS property defines the space between words?", "options": ["A. letter-spacing", "B. word-spacing", "C. text-spacing"], "correctAnswer": "B" },
+            { "question": "Which CSS property controls the visibility of an element without removing its space?", "options": ["A. display: none", "B. visibility: hidden", "C. opacity: 0"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used to create a scrolling effect for content that overflows its container?", "options": ["A. scroll", "B. overflow", "C. scroll-behavior"], "correctAnswer": "B" },
+            { "question": "Which CSS property allows you to specify a shorthand for background properties?", "options": ["A. bg", "B. background", "C. background-shorthand"], "correctAnswer": "B" },
+            { "question": "Which CSS property specifies the blend mode of an element's background image?", "options": ["A. background-mode", "B. background-blend-mode", "C. bg-blend"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used to remove the underline from a link?", "options": ["A. text-decoration: none", "B. underline: none", "C. text-line: none"], "correctAnswer": "A" },
+            { "question": "Which CSS property specifies the alignment of text within its element?", "options": ["A. align", "B. text-align", "C. content-align"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used for styling lists, such as changing bullet points?", "options": ["A. list-style", "B. list-type", "C. list-decoration"], "correctAnswer": "A" },
+            { "question": "Which CSS property specifies the indentation of the first line of a text block?", "options": ["A. text-indent", "B. first-line-indent", "C. indent"], "correctAnswer": "A" },
+            { "question": "Which CSS property applies a blur effect to an image?", "options": ["A. filter: blur()", "B. blur-image", "C. image-filter"], "correctAnswer": "A" },
+            { "question": "Which CSS property is used to set the spacing between characters in a text?", "options": ["A. letter-spacing", "B. char-spacing", "C. font-spacing"], "correctAnswer": "A" },
+            { "question": "Which CSS property is used to control the flow of text around floated elements?", "options": ["A. wrap", "B. clear", "C. float-clear"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used to define a custom font for a webpage?", "options": ["A. @font-face", "B. font-import", "C. custom-font"], "correctAnswer": "A" },
+            { "question": "Which CSS property sets the width of an element, including padding and border?", "options": ["A. width", "B. total-width", "C. box-sizing: border-box"], "correctAnswer": "C" },
+            { "question": "Which CSS property adds a border to an element?", "options": ["A. line", "B. frame", "C. border"], "correctAnswer": "C" },
+            { "question": "Which CSS property controls the transparency of an element?", "options": ["A. transparent", "B. opacity", "C. visibility"], "correctAnswer": "B" },
+            { "question": "Which CSS property defines the flexibility of a flex item?", "options": ["A. flex", "B. flex-grow", "C. grow"], "correctAnswer": "A" },
+            { "question": "Which CSS property is used to create smooth transitions for property changes?", "options": ["A. animation", "B. transform", "C. transition"], "correctAnswer": "C" },
+            { "question": "Which CSS property positions an element relative to its normal position?", "options": ["A. absolute", "B. relative", "C. fixed"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used to set the text decoration for an element?", "options": ["A. font-decoration", "B. text-style", "C. text-decoration"], "correctAnswer": "C" },
+            { "question": "Which CSS property specifies the color of a text?", "options": ["A. font-color", "B. text-color", "C. color"], "correctAnswer": "C" },
+            { "question": "Which CSS property defines the background color of an element?", "options": ["A. bg-color", "B. background-color", "C. color-bg"], "correctAnswer": "B" },
+            { "question": "Which CSS property defines the font family of a text?", "options": ["A. font-type", "B. font-family", "C. text-font"], "correctAnswer": "B" },
+            { "question": "Which CSS property controls the font size of a text?", "options": ["A. text-size", "B. font-size", "C. size"], "correctAnswer": "B" },
+            { "question": "Which CSS property is used to apply a shadow to text?", "options": ["A. shadow-text", "B. text-shadow", "C. font-shadow"], "correctAnswer": "B" }
+        ];
+
+        // --- ALL 100 JavaScript Quiz questions are defined here ---
+        const javaScriptQuestions = [
+            { "question": "Which keyword is used to declare a variable in JavaScript?", "options": ["A. var", "B. let", "C. const"], "correctAnswer": "A" },
+            { "question": "Which method is used to write directly to the HTML document output stream?", "options": ["A. console.log()", "B. document.write()", "C. window.alert()"], "correctAnswer": "B" },
+            { "question": "What is the correct syntax for an `if` statement in JavaScript?", "options": ["A. if (i == 5)", "B. if i == 5 then", "C. if (i = 5)"], "correctAnswer": "A" },
+            { "question": "How do you add a single-line comment in JavaScript?", "options": ["A. <!-- comment -->", "B. // comment", "C. /* comment */"], "correctAnswer": "B" },
+            { "question": "Which operator is used for strict equality (value and type)?", "options": ["A. ==", "B. ===", "C. !="], "correctAnswer": "B" },
+            { "question": "What is the output of `console.log(typeof null)`?", "options": ["A. 'null'", "B. 'object'", "C. 'undefined'"], "correctAnswer": "B" },
+            { "question": "Which method is used to parse a JSON string into a JavaScript object?", "options": ["A. JSON.parse()", "B. JSON.stringify()", "C. JSON.decode()"], "correctAnswer": "A" },
+            { "question": "Which built-in method adds one or more elements to the end of an array and returns the new length of the array?", "options": ["A. push()", "B. pop()", "C. unshift()"], "correctAnswer": "A" },
+            { "question": "What is `NaN` in JavaScript?", "options": ["A. Not a Name", "B. Not a Number", "C. New and Naming"], "correctAnswer": "B" },
+            { "question": "How do you round the number 7.25 to the nearest integer?", "options": ["A. Math.round(7.25)", "B. Math.rnd(7.25)", "C. round(7.25)"], "correctAnswer": "A" },
+            { "question": "Which event occurs when the user clicks on an HTML element?", "options": ["A. onchange", "B. onclick", "C. onmouseover"], "correctAnswer": "B" },
+            { "question": "What is the purpose of the `return` statement in a function?", "options": ["A. To stop the function execution", "B. To specify the value returned by the function", "C. Both A and B"], "correctAnswer": "C" },
+            { "question": "Which statement is true about JavaScript's `==` operator?", "options": ["A. It performs strict equality comparison", "B. It performs type coercion before comparison", "C. It compares only value, not type"], "correctAnswer": "B" },
+            { "question": "What is a closure in JavaScript?", "options": ["A. A function that has access to its outer function's scope even after the outer function has finished executing", "B. A way to close an application", "C. An event listener"], "correctAnswer": "A" },
+            { "question": "How do you declare a constant in JavaScript (ES6)?", "options": ["A. var myConst = 10;", "B. const myConst = 10;", "C. let myConst = 10;"], "correctAnswer": "B" },
+            { "question": "Which method is used to remove the last element from an array?", "options": ["A. shift()", "B. splice()", "C. pop()"], "correctAnswer": "C" },
+            { "question": "What does `querySelector()` return if no element matches the specified selector?", "options": ["A. an empty NodeList", "B. null", "C. undefined"], "correctAnswer": "B" },
+            { "question": "How do you convert a string to an integer in JavaScript?", "options": ["A. parseInt()", "B. toString()", "C. String()"], "correctAnswer": "A" },
+            { "question": "What is the difference between `null` and `undefined`?", "options": ["A. They are the same", "B. `null` is an assigned value, `undefined` means a variable has been declared but not yet assigned a value", "C. `undefined` is an assigned value, `null` means a variable has been declared but not yet assigned a value"], "correctAnswer": "B" },
+            { "question": "Which loop iterates over the properties of an object?", "options": ["A. for (let i of array)", "B. for (let key in object)", "C. while (condition)"], "correctAnswer": "B" },
+            { "question": "Which global function is used to convert a number to a string?", "options": ["A. String()", "B. toText()", "C. convertToString()"], "correctAnswer": "A" },
+            { "question": "How do you prevent the default action of an event?", "options": ["A. event.stopDefault()", "B. event.preventDefault()", "C. event.cancel()"], "correctAnswer": "B" },
+            { "question": "Which JavaScript method is used to execute a function for each element in an array?", "options": ["A. map()", "B. forEach()", "C. filter()"], "correctAnswer": "B" },
+            { "question": "What is hoisting in JavaScript?", "options": ["A. Moving variables to the top of the scope during execution", "B. A type of loop", "C. An error handling mechanism"], "correctAnswer": "A" },
+            { "question": "Which operator performs exponentiation?", "options": ["A. ^", "B. **", "C. %"], "correctAnswer": "B" },
+            { "question": "What does the `isNaN()` function do?", "options": ["A. Checks if a value is a number", "B. Checks if a value is NOT a number", "C. Converts a value to a number"], "correctAnswer": "B" },
+            { "question": "How do you access the first element of an array named `myArray`?", "options": ["A. myArray(0)", "B. myArray[0]", "C. myArray.first()"], "correctAnswer": "B" },
+            { "question": "Which method returns the value of a string converted to uppercase?", "options": ["A. toUpperCase()", "B. toUppercase()", "C. upperCase()"], "correctAnswer": "A" },
+            { "question": "What is the purpose of the `debugger` keyword?", "options": ["A. To stop code execution and open the debugger", "B. To log messages to the console", "C. To throw an error"], "correctAnswer": "A" },
+            { "question": "Which type of popup box requires user input to proceed?", "options": ["A. alert", "B. confirm", "C. prompt"], "correctAnswer": "C" },
+            { "question": "Which built-in method sorts the elements of an array?", "options": ["A. order()", "B. sort()", "C. arrange()"], "correctAnswer": "B" },
+            { "question": "What is the output of `2 + '2'`?", "options": ["A. 4", "B. '22'", "C. NaN"], "correctAnswer": "B" },
+            { "question": "Which method is used to join two or more arrays?", "options": ["A. merge()", "B. concat()", "C. append()"], "correctAnswer": "B" },
+            { "question": "What does `DOM` stand for?", "options": ["A. Document Object Model", "B. Data Order Model", "C. Design Object Model"], "correctAnswer": "A" },
+            { "question": "Which operator is used for logical AND?", "options": ["A. ||", "B. &&", "C. !"], "correctAnswer": "B" },
+            { "question": "Which method is used to select an element by its ID?", "options": ["A. getElementById()", "B. querySelector()", "C. findElementById()"], "correctAnswer": "A" },
+            { "question": "What is an `IIFE`?", "options": ["A. Immediately Invoked Function Expression", "B. Internal Identifier Function Element", "C. Interactive Interface Function Entry"], "correctAnswer": "A" },
+            { "question": "Which keyword is used to handle errors in a `try...catch` block?", "options": ["A. finally", "B. throw", "C. catch"], "correctAnswer": "C" },
+            { "question": "How do you create a new object in JavaScript?", "options": ["A. var obj = new Object();", "B. var obj = {};", "C. Both A and B"], "correctAnswer": "C" },
+            { "question": "Which method removes the first element from an array?", "options": ["A. pop()", "B. shift()", "C. slice()"], "correctAnswer": "B" },
+            { "question": "What is the output of `console.log(10 % 3)`?", "options": ["A. 3", "B. 1", "C. 0"], "correctAnswer": "B" },
+            { "question": "Which method can be used to convert a JavaScript object to a JSON string?", "options": ["A. JSON.parse()", "B. JSON.stringify()", "C. toJSON()"], "correctAnswer": "B" },
+            { "question": "What is `event bubbling`?", "options": ["A. Events propagating from target to document root", "B. Events propagating from document root to target", "C. Events triggered randomly"], "correctAnswer": "A" },
+            { "question": "Which data type is used for a single true/false value?", "options": ["A. string", "B. number", "C. boolean"], "correctAnswer": "C" },
+            { "question": "Which loop is guaranteed to execute its block at least once?", "options": ["A. for loop", "B. while loop", "C. do...while loop"], "correctAnswer": "C" },
+            { "question": "How do you get the number of elements in an array?", "options": ["A. myArray.count", "B. myArray.length", "C. myArray.size"], "correctAnswer": "B" },
+            { "question": "Which statement is used to exit a loop or a `switch` statement?", "options": ["A. continue", "B. break", "C. exit"], "correctAnswer": "B" },
+            { "question": "Which method is used to compare two strings alphabetically?", "options": ["A. compareTo()", "B. localeCompare()", "C. equals()"], "correctAnswer": "B" },
+            { "question": "What does `console.log()` do?", "options": ["A. Displays an alert box", "B. Prints messages to the web console", "C. Writes to the HTML document"], "correctAnswer": "B" },
+            { "question": "Which method converts a string to all lowercase letters?", "options": ["A. toLower()", "B. toLowerCase()", "C. lowerCase()"], "correctAnswer": "B" },
+            { "question": "Which operator is used for logical OR?", "options": ["A. &&", "B. ||", "C. !"], "correctAnswer": "B" },
+            { "question": "Which type of variable declaration has block scope?", "options": ["A. var", "B. let", "C. auto"], "correctAnswer": "B" },
+            { "question": "What does `this` keyword refer to in JavaScript?", "options": ["A. The current function", "B. The global object", "C. The object that owns the executing code"], "correctAnswer": "C" },
+            { "question": "Which method is used to add new items to an array and/or remove existing items?", "options": ["A. push()", "B. splice()", "C. concat()"], "correctAnswer": "B" },
+            { "question": "Which operator checks for inequality without type coercion?", "options": ["A. !=", "B. !===", "C. !=="], "correctAnswer": "C" },
+            { "question": "How do you specify a function that should be executed after a delay?", "options": ["A. setTimeout()", "B. setInterval()", "C. delayFunction()"], "correctAnswer": "A" },
+            { "question": "Which event occurs when an HTML element is selected?", "options": ["A. onselect", "B. onchange", "C. onclick"], "correctAnswer": "B" },
+            { "question": "Which method stops the propagation of an event?", "options": ["A. stopPropagation()", "B. preventDefault()", "C. cancelBubble()"], "correctAnswer": "A" },
+            { "question": "Which property is used to get the inner HTML content of an element?", "options": ["A. textContent", "B. innerHTML", "C. getHTML()"], "correctAnswer": "B" },
+            { "question": "Which method is used to remove whitespace from both ends of a string?", "options": ["A. strip()", "B. trim()", "C. clean()"], "correctAnswer": "B" },
+            { "question": "What is the purpose of the `break` statement?", "options": ["A. To exit the current function", "B. To jump to the next iteration of a loop", "C. To terminate a loop or switch statement"], "correctAnswer": "C" },
+            { "question": "Which type of error occurs when a variable is used before it is declared?", "options": ["A. TypeError", "B. SyntaxError", "C. ReferenceError"], "correctAnswer": "C" },
+            { "question": "Which method is used to find the index of the first occurrence of a specified text in a string?", "options": ["A. search()", "B. indexOf()", "C. find()"], "correctAnswer": "B" },
+            { "question": "What is the default value of a variable that has been declared but not initialized?", "options": ["A. 0", "B. null", "C. undefined"], "correctAnswer": "C" },
+            { "question": "Which operator is used for string concatenation?", "options": ["A. &", "B. +", "C. -"], "correctAnswer": "B" },
+            { "question": "Which method executes a function or evaluates an expression repeatedly?", "options": ["A. setTimeout()", "B. setInterval()", "C. loop()"], "correctAnswer": "B" },
+            { "question": "What is the purpose of `event delegation`?", "options": ["A. To prevent events from firing", "B. To attach a single event listener to a parent element to handle events for multiple child elements", "C. To reorder events"], "correctAnswer": "B" },
+            { "question": "Which property specifies the number of milliseconds an event has been running?", "options": ["A. event.time", "B. event.timeStamp", "C. event.duration"], "correctAnswer": "B" },
+            { "question": "Which JavaScript method is used to sort an array in descending order?", "options": ["A. sort().reverse()", "B. sort(desc)", "C. reverseSort()"], "correctAnswer": "A" },
+            { "question": "What is `strict mode` in JavaScript?", "options": ["A. A way to enforce stricter parsing and error handling", "B. A mode for faster execution", "C. A mode for debugging only"], "correctAnswer": "A" },
+            { "question": "Which method returns a new array with all sub-array elements concatenated into it recursively up to the specified depth?", "options": ["A. flatten()", "B. concatAll()", "C. flat()"], "correctAnswer": "C" },
+            { "question": "What is a `callback function`?", "options": ["A. A function that is called immediately", "B. A function passed as an argument to another function, to be executed later", "C. A function that returns a callback"], "correctAnswer": "B" },
+            { "question": "Which method allows you to call a function with a given `this` value and arguments provided as an array (or an array-like object)?", "options": ["A. call()", "B. bind()", "C. apply()"], "correctAnswer": "C" },
+            { "question": "Which operator returns `true` if the operands are not equal in value or type?", "options": ["A. !==", "B. !==", "C. =!="], "correctAnswer": "A" },
+            { "question": "Which method converts all elements in an array into a string, separated by a specified separator?", "options": ["A. join()", "B. toString()", "C. combine()"], "correctAnswer": "A" },
+            { "question": "What is `scope` in JavaScript?", "options": ["A. The current value of a variable", "B. The accessibility of variables, functions, and objects in some part of your code", "C. A built-in object"], "correctAnswer": "B" },
+            { "question": "Which method stops the execution of JavaScript for a specified amount of time?", "options": ["A. wait()", "B. sleep()", "C. There is no built-in synchronous sleep function"], "correctAnswer": "C" },
+            { "question": "Which method creates a new array with all elements that pass the test implemented by the provided function?", "options": ["A. map()", "B. filter()", "C. reduce()"], "correctAnswer": "B" },
+            { "question": "What is a `Promise` in JavaScript?", "options": ["A. A placeholder for a value that is not yet known", "B. A type of loop", "C. An error handling mechanism"], "correctAnswer": "A" },
+            { "question": "Which method removes elements from an array and, if necessary, inserts new elements in their place, returning the deleted elements?", "options": ["A. slice()", "B. splice()", "C. remove()"], "correctAnswer": "B" },
+            { "question": "Which object contains information about the browser window and screen?", "options": ["A. document", "B. window", "C. navigator"], "correctAnswer": "B" },
+            { "question": "Which property returns the content of an element without the HTML tags?", "options": ["A. innerHTML", "B. outerHTML", "C. textContent"], "correctAnswer": "C" },
+            { "question": "Which method returns a new array containing the elements of the calling array from start to end (end not included)?", "options": ["A. slice()", "B. splice()", "C. subArray()"], "correctAnswer": "A" },
+            { "question": "Which function converts a string representation of a number to a floating-point number?", "options": ["A. parseInt()", "B. parseFloat()", "C. toNumber()"], "correctAnswer": "B" },
+            { "question": "What does `localStorage` allow you to do?", "options": ["A. Store data persistently in the browser with no expiration time", "B. Store data only for the current session", "C. Store data on the server"], "correctAnswer": "A" },
+            { "question": "Which method calls a function with a given `this` value and arguments provided individually?", "options": ["A. apply()", "B. call()", "C. bind()"], "correctAnswer": "B" },
+            { "question": "What does the `event.target` property refer to?", "options": ["A. The element that the event listener was attached to", "B. The element that triggered the event", "C. The parent element of the event"], "correctAnswer": "B" },
+            { "question": "Which type of function is typically used for event handlers?", "options": ["A. Synchronous", "B. Asynchronous", "C. Blocking"], "correctAnswer": "B" },
+            { "question": "What is the purpose of `arrow functions` (=>) in ES6?", "options": ["A. Shorter syntax and lexical `this` binding", "B. Better performance", "C. Only for asynchronous code"], "correctAnswer": "A" },
+            { "question": "Which method creates a new array by calling a provided function on every element in the calling array?", "options": ["A. forEach()", "B. filter()", "C. map()"], "correctAnswer": "C" },
+            { "question": "What is `JSON`?", "options": ["A. JavaScript Object Notation", "B. Java Standard Object Network", "C. JavaScript Online Navigator"], "correctAnswer": "A" },
+            { "question": "Which method can be used to set a property on an object that is not directly writable?", "options": ["A. Object.assign()", "B. Object.defineProperty()", "C. Object.create()"], "correctAnswer": "B" },
+            { "question": "What is the purpose of `async/await`?", "options": ["A. To simplify asynchronous code, making it look synchronous", "B. To create animations", "C. To manage global variables"], "correctAnswer": "A" },
+            { "question": "Which method converts a JavaScript value to a JSON string, optionally replacing values if a replacer function is specified?", "options": ["A. JSON.parse()", "B. JSON.stringify()", "C. toJSON()"], "correctAnswer": "B" },
+            { "question": "What does `window.location` object contain?", "options": ["A. Browser history", "B. Current URL information", "C. User's geographical location"], "correctAnswer": "B" },
+            { "question": "Which loop is used to iterate over iterable objects (like arrays, strings, maps, sets)?", "options": ["A. for...in", "B. for...of", "C. for loop"], "correctAnswer": "B" },
+            { "question": "Which object represents the web browser's history?", "options": ["A. window.history", "B. document.history", "C. navigator.history"], "correctAnswer": "A" },
+            { "question": "Which JavaScript method is used to remove elements from an array by reference?", "options": ["A. filter()", "B. indexOf() and splice()", "C. remove()"], "correctAnswer": "B" },
+            { "question": "What is the purpose of `try...catch` block?", "options": ["A. To define variables", "B. To handle runtime errors", "C. To create loops"], "correctAnswer": "B" },
+            { "question": "Which method is used to execute a function after a specified delay, but only once?", "options": ["A. setInterval()", "B. setTimeout()", "C. runOnce()"], "correctAnswer": "B" },
+            { "question": "Which property returns the number of elements in a string?", "options": ["A. length", "B. size", "C. count"], "correctAnswer": "A" },
+            { "question": "What is the output of `console.log(typeof [])`?", "options": ["A. 'array'", "B. 'object'", "C. 'null'"], "correctAnswer": "B" },
+            { "question": "Which method is used to search for a match between a regular expression and a string?", "options": ["A. match()", "B. test()", "C. search()"], "correctAnswer": "C" },
+            { "question": "What does the `event.stopPropagation()` method do?", "options": ["A. Prevents the default action of the event", "B. Stops the event from bubbling up the DOM tree", "C. Cancels the event entirely"], "correctAnswer": "B" },
+            { "question": "Which method is used to get the value of an attribute of an element?", "options": ["A. getAttribute()", "B. readAttribute()", "C. findAttribute()"], "correctAnswer": "A" },
+            { "question": "Which JavaScript engine does Google Chrome use?", "options": ["A. SpiderMonkey", "B. Chakra", "C. V8"], "correctAnswer": "C" },
+            { "question": "What is a `debugger` statement for?", "options": ["A. To insert a breakpoint for debugging", "B. To log an error", "C. To stop the script"], "correctAnswer": "A" },
+            { "question": "Which method is used to remove an attribute from an element?", "options": ["A. deleteAttribute()", "B. removeAttribute()", "C. clearAttribute()"], "correctAnswer": "B" },
+            { "question": "Which method returns a new array with all elements that pass the test implemented by the provided function?", "options": ["A. map()", "B. filter()", "C. reduce()"], "correctAnswer": "B" },
+            { "question": "What is the output of `console.log(0 == false)`?", "options": ["A. true", "B. false", "C. undefined"], "correctAnswer": "A" },
+            { "question": "Which method inserts a value into an array at a specified index?", "options": ["A. push()", "B. unshift()", "C. splice()"], "correctAnswer": "C" },
+            { "question": "Which property returns the JavaScript version?", "options": ["A. navigator.appVersion", "B. navigator.javaScriptVersion", "C. navigator.jsVersion"], "correctAnswer": "A" },
+            { "question": "What is the purpose of `event capturing`?", "options": ["A. Events propagating from target to document root", "B. Events propagating from document root to target", "C. Events triggered randomly"], "correctAnswer": "B" },
+            { "question": "Which method is used to iterate over a string?", "options": ["A. forEach()", "B. map()", "C. for loop"], "correctAnswer": "C" },
+            { "question": "What is the output of `console.log(true + false)`?", "options": ["A. 1", "B. 0", "C. NaN"], "correctAnswer": "A" },
+            { "question": "Which method returns a new string by replacing some or all matches of a pattern?", "options": ["A. search()", "B. replace()", "C. findAndReplace()"], "correctAnswer": "B" },
+            { "question": "What is the difference between `let` and `const`?", "options": ["A. `let` is mutable, `const` is immutable", "B. `let` has global scope, `const` has block scope", "C. `let` can be reassigned, `const` cannot"], "correctAnswer": "C" },
+            { "question": "Which method returns the value of a string converted to uppercase?", "options": ["A. toUpper()", "B. toUpperCase()", "C. upperCase()"], "correctAnswer": "B" }
+        ];
+
 
         // Global variables for Firebase and Quiz state
         let userId = null; // To store the current user's ID
@@ -634,10 +507,13 @@
         let isAuthReady = false; // A flag to make sure we wait for Firebase to connect
         let currentQuestionIndex = 0;
         let score = 0;
-        let userAnswers = []; // This will hold answers for the 50 selected questions
-        let selectedQuestions = []; // This array will hold the 50 randomly selected questions
+        let userAnswers = []; // This will hold answers for the 20 selected questions
+        let selectedQuestions = []; // This array will hold the 20 randomly selected questions for the current quiz
+        let selectedQuizCategory = ''; // Stores 'HTML', 'CSS', or 'JavaScript'
         let timeLeft = 30;
         let timerInterval;
+        const questionsPerQuiz = 20; // Number of questions to be used in each quiz session
+        const pointsPerQuestion = 2; // Marks per correct answer
 
         // Firebase objects - declared as `let` and initialized to empty objects to prevent 'undefined' errors
         let app = {};
@@ -651,7 +527,7 @@
         // Define admin user IDs (REPLACE WITH ACTUAL ADMIN UIDs IN PRODUCTION FOR SECURITY)
         // For demonstration, you can put your own Anonymous User ID here after running the app once
         // and seeing your generated ID in the top-left corner.
-        const adminUserIds = ["7oFXI4b1qtT9r3ZLIIV9iKfcmCl2", "9EdTKGhl9tMxYFP9yK4SLpT9VgI3"
+        const adminUserIds = [ "CVKjYGbvCcXrwD229Nn7PN5W98P2"
             // Example: "your-actual-user-id-goes-here",
             // Example: "another-firebase-uid-for-admin2"
         ];
@@ -776,18 +652,22 @@
             // This needs to happen AFTER the DOM is loaded
             const splashPage = document.getElementById('splash-page');
             const nameInput = document.getElementById('student-name-input');
-            const startQuizFromSplashButton = document.getElementById('start-quiz-from-splash-button');
-            const signInGoogleButton = document.getElementById('sign-in-google-button'); // New Google button
+            const startHtmlQuizButton = document.getElementById('start-html-quiz-button');
+            const startCssQuizButton = document.getElementById('start-css-quiz-button');
+            const startJsQuizButton = document.getElementById('start-js-quiz-button');
+            const signInGoogleButton = document.getElementById('sign-in-google-button');
             const currentUserDisplay = document.getElementById('current-user-display');
             const viewAllScoresButton = document.getElementById('view-all-scores-button');
 
             const introPage = document.getElementById('intro-page');
+            const introQuizTitle = document.getElementById('intro-quiz-title');
             const startQuizButton = document.getElementById('start-quiz-button');
             const confirmationModal = document.getElementById('confirmation-modal');
             const confirmStartButton = document.getElementById('confirm-start-button');
             const cancelStartButton = document.getElementById('cancel-start-button');
-            const quizContainer = document.querySelector('.quiz-container'); // Note: selector by class
+            const quizContainer = document.querySelector('.quiz-container');
 
+            const quizCategoryTitle = document.getElementById('quiz-category-title');
             const questionNumberDisplay = document.getElementById('question-number');
             const questionDisplay = document.getElementById('question-display');
             const optionsContainer = document.getElementById('options-container');
@@ -951,11 +831,24 @@
             // --- 4. Core Quiz Logic Functions ---
 
             /**
-             * Selects 50 random questions from the allQuestions pool.
+             * Selects 20 random questions from the chosen category's question pool.
+             * @param {string} category - The quiz category ('HTML', 'CSS', 'JavaScript').
              */
-            function selectRandomQuestions() {
-                const shuffledAllQuestions = shuffleArray([...allQuestions]); // Create a shuffled copy
-                selectedQuestions = shuffledAllQuestions.slice(0, 50); // Take the first 50
+            function selectRandomQuestions(category) {
+                let questionPool;
+                if (category === 'HTML') {
+                    questionPool = htmlQuestions;
+                } else if (category === 'CSS') {
+                    questionPool = cssQuestions;
+                } else if (category === 'JavaScript') {
+                    questionPool = javaScriptQuestions;
+                } else {
+                    console.error("Invalid quiz category selected:", category);
+                    return; // Don't proceed without a valid category
+                }
+
+                const shuffledPool = shuffleArray([...questionPool]); // Create a shuffled copy
+                selectedQuestions = shuffledPool.slice(0, questionsPerQuiz); // Take the first 20
                 userAnswers = new Array(selectedQuestions.length).fill(null); // Reset answers for new set
             }
 
@@ -1235,7 +1128,7 @@
                 // Go through all questions and check user's answers
                 selectedQuestions.forEach((question, index) => { // Iterate over selectedQuestions
                     if (userAnswers[index] === question.correctAnswer) {
-                        score++; // Add to score if correct
+                        score += pointsPerQuestion; // Add points per question
                     }
                 });
 
@@ -1247,13 +1140,18 @@
                 }
 
                 // Save score to Firestore ONLY if Firebase is genuinely initialized and ready for DB ops
+                // Use the correctly initialized appId here
                 if (firebaseInitializedSuccessfully && isAuthReady && db && typeof db.collection === 'function') {
-                    const scoresCollectionRef = db.collection(`artifacts/${appId}/public/data/quiz_scores`);
+                    const scoresCollectionPath = `artifacts/${appId.trim()}/public/data/quiz_scores`;
+                    console.log("Saving score to path:", scoresCollectionPath); // Debugging path
+                    const scoresCollectionRef = db.collection(scoresCollectionPath);
                     try {
                         await scoresCollectionRef.add({
                             name: escapeHTML(nameToSave), // Sanitize name before saving to prevent XSS
                             score: score,
-                            totalQuestions: selectedQuestions.length, // Use selectedQuestions.length
+                            totalQuestions: questionsPerQuiz, // Total questions attempted (always 20)
+                            maxPossibleScore: questionsPerQuiz * pointsPerQuestion, // Max score for this quiz
+                            category: selectedQuizCategory, // Save the quiz category
                             timestamp: firebase.firestore.FieldValue.serverTimestamp() // Use server timestamp
                         });
                         console.log("Score saved successfully to Firebase!");
@@ -1276,7 +1174,8 @@
                 // Display the final score and new buttons
                 scoreDisplay.innerHTML = `
                     <p>Quiz Complete!</p>
-                    <p class="mt-2">You got <span class="text-blue-700">${score}</span> out of <span class="text-blue-700">${selectedQuestions.length}</span> correct! 🎉</p>
+                    <p class="mt-2">You got <span class="text-blue-700">${score}</span> out of <span class="text-blue-700">${questionsPerQuiz * pointsPerQuestion}</span> correct! 🎉</p>
+                    <p class="text-md text-gray-600">(Category: ${selectedQuizCategory})</p>
                     <button id="view-scoreboard-button" class="quiz-button bg-purple-600 hover:bg-purple-700 mt-6">View Scoreboard</button>
                     <button id="play-again-button" class="quiz-button bg-green-600 hover:bg-green-700 mt-4 ml-2">Play Again!</button>
                 `;
@@ -1291,6 +1190,7 @@
                 optionsContainer.classList.add('hidden');
                 feedbackMessage.classList.add('hidden');
                 timerDisplay.classList.add('hidden'); // Hide timer
+                quizCategoryTitle.classList.add('hidden'); // Hide quiz category title
                 questionIndicatorsContainer.classList.add('hidden'); // Hide indicators
                 questionIndicators = []; // Clear indicators array
 
@@ -1339,7 +1239,7 @@
                 console.log("isAuthReady:", isAuthReady);
                 console.log("db object:", db);
                 console.log("typeof db.collection:", typeof db.collection);
-                console.log("appId value:", appId);
+                console.log("appId value (after check):", appId, " (length: " + appId.length + ")");
                 console.log("scoreToDeleteDocId:", scoreToDeleteDocId);
                 // **********************************
 
@@ -1352,8 +1252,11 @@
                 }
 
                 try {
-                    const docRef = db.collection(`artifacts/${appId}/public/data/quiz_scores`).doc(scoreToDeleteDocId); // Use collection().doc()
-                    await docRef.delete(); // Use docRef.delete() with the compat library
+                    // Use the correctly initialized and trimmed appId here
+                    const collectionPath = `artifacts/${appId.trim()}/public/data/quiz_scores`;
+                    console.log("Attempting to delete from collection path:", collectionPath); // Log the exact path
+                    const docRef = db.collection(collectionPath).doc(scoreToDeleteDocId);
+                    await docRef.delete();
                     console.log(`Score deleted successfully by admin: ${scoreToDeleteDocId}`);
                     scoreToDeleteDocId = null; // Clear the stored ID
                     // The onSnapshot listener in loadScoreboard will automatically update the UI
@@ -1399,7 +1302,10 @@
                     return; // Wait for Firebase auth to be ready
                 }
 
-                const scoresCollectionRef = db.collection(`artifacts/${appId}/public/data/quiz_scores`);
+                // Use the correctly initialized appId here
+                const scoresCollectionPath = `artifacts/${appId.trim()}/public/data/quiz_scores`;
+                console.log("Loading scores from path:", scoresCollectionPath); // Debugging path
+                const scoresCollectionRef = db.collection(scoresCollectionPath);
                 // Use .onSnapshot() directly from the collection reference
                 scoresCollectionRef.onSnapshot((snapshot) => {
                     let scoresData = [];
@@ -1434,7 +1340,7 @@
                             listItem.innerHTML = `
                                 <span>${index + 1}. ${escapeHTML(data.name)}</span>
                                 <span class="flex items-center">
-                                    Score: ${data.score} / ${data.totalQuestions}
+                                    Score: ${data.score} / ${data.totalQuestions * pointsPerQuestion} (${data.category || 'N/A'})
                                     ${isCurrentUserAdmin ? `
                                     <button class="delete-score-button ml-4" data-doc-id="${data.id}">
                                         <i class="fas fa-trash-alt"></i> Delete
@@ -1491,6 +1397,7 @@
                 currentQuestionIndex = 0;
                 score = 0;
                 userAnswers = []; // Reset this, it will be populated based on selected questions
+                selectedQuizCategory = ''; // Clear selected category
                 stopTimer(); // Ensure timer is off
 
                 // Ensure all quiz specific elements are visible again for the next game (though hidden by quizContainer)
@@ -1499,22 +1406,28 @@
                 optionsContainer.classList.remove('hidden');
                 feedbackMessage.classList.remove('hidden');
                 timerDisplay.classList.remove('hidden');
-                questionIndicatorsContainer.classList.add('hidden'); // Hide indicators on splash
+                quizCategoryTitle.classList.remove('hidden'); // Show quiz category title
+                questionIndicatorsContainer.classList.add('hidden'); // Hide indicators
             }
 
             /**
-             * Handles the action when 'Start Your Adventure!' button is clicked.
-             * Validates name and proceeds to introduction page.
+             * Handles the action when a category quiz button is clicked from splash.
+             * Sets the category and proceeds to the introduction page.
+             * @param {string} category - The quiz category ('HTML', 'CSS', 'JavaScript').
              */
-            function startQuizFromSplash() {
+            function startCategoryQuiz(category) {
                 const enteredName = nameInput.value.trim();
                 if (enteredName) {
                     userName = enteredName; // Save the entered name
+                    selectedQuizCategory = category; // Set the chosen category
+                    introQuizTitle.textContent = `Welcome to the ${category} Quiz! 🚀`; // Update intro title
                     hideAllPages();
                     introPage.classList.remove('hidden');
                 } else if (auth.currentUser && auth.currentUser.isAnonymous) {
                      // If user is anonymous and hasn't entered a name, proceed anyway but with anonymous name
                      userName = `Anonymous User (${userId.substring(0, 6)}...)`;
+                     selectedQuizCategory = category; // Set the chosen category
+                     introQuizTitle.textContent = `Welcome to the ${category} Quiz! 🚀`; // Update intro title
                      hideAllPages();
                      introPage.classList.remove('hidden');
                 }
@@ -1525,6 +1438,7 @@
                     setTimeout(() => nameInput.classList.remove('border-red-500'), 1000); // Remove after 1 second
                 }
             }
+
 
             /**
              * Shows the confirmation modal before starting the quiz.
@@ -1538,9 +1452,10 @@
              * Starts the main quiz sequence after confirmation.
              */
             function startGame() {
-                selectRandomQuestions(); // Select 50 random questions for this session
+                selectRandomQuestions(selectedQuizCategory); // Select 20 random questions for this session based on category
                 hideAllPages();
                 quizContainer.classList.remove('hidden'); // Show the main quiz container
+                quizCategoryTitle.textContent = `${selectedQuizCategory} Quiz! 🚀`; // Set the title for the quiz container
                 questionIndicatorsContainer.classList.remove('hidden'); // Show indicators
                 initializeQuestionIndicators(); // Set up indicators for the first time
                 loadQuestion(); // Start loading the first question
@@ -1563,12 +1478,14 @@
 
             // --- 6. Event Listeners for Page Flow and Quiz Interaction ---
 
-            // Splash Page Buttons
-            startQuizFromSplashButton.addEventListener('click', startQuizFromSplash);
-            signInGoogleButton.addEventListener('click', signInWithGoogle); // New Google button listener
+            // Splash Page Buttons (Category Selection)
+            startHtmlQuizButton.addEventListener('click', () => startCategoryQuiz('HTML'));
+            startCssQuizButton.addEventListener('click', () => startCategoryQuiz('CSS'));
+            startJsQuizButton.addEventListener('click', () => startCategoryQuiz('JavaScript'));
+            signInGoogleButton.addEventListener('click', signInWithGoogle);
             viewAllScoresButton.addEventListener('click', loadScoreboard);
 
-            // Introduction Page Button
+            // Introduction Page Button (Confirms start after category selected)
             startQuizButton.addEventListener('click', showConfirmationModal);
 
             // Confirmation Modal Buttons
