@@ -4,561 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Super Fun HTML & CSS Quiz!</title>
+    <link rel="stylesheet" href="./style.css">
 
     <!-- We're using Tailwind CSS for quick and easy styling! -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons (like delete) -->
+    <!-- Font Awesome for icons (like delete, Google) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-    <style>
-        /*
-         * CUSTOM CSS FOR QUIZ APP
-         *
-         * This section contains all our special styling that isn't directly from Tailwind.
-         * We place it AFTER the Tailwind script to make sure our custom rules apply correctly.
-         *
-         * -----------------------------------------------------------------------------
-         * 1. General Body & Page Layout
-         * -----------------------------------------------------------------------------
-         */
-        body {
-            font-family: 'Inter', sans-serif; /* A friendly, clean font for our quiz */
-            /* Base gradient for the background */
-            background: linear-gradient(135deg, #a7e0f9 0%, #d8b4fe 100%);
-            /* Layered patterns for the 'code exercise' look */
-            background-image:
-                radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.05) 1px, transparent 0), /* Tiny, subtle dots */
-                linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px), /* Faint vertical lines */
-                linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px); /* Faint horizontal lines */
-            background-size: 20px 20px, 20px 20px, 20px 20px; /* Spacing of dots/lines */
-            background-blend-mode: overlay, overlay, overlay, normal; /* Blends patterns with the gradient */
-            background-attachment: fixed; /* Keeps the background fixed even when scrolling */
-            display: flex;                   /* Use flexbox to center content */
-            flex-direction: column;          /* Stack content vertically */
-            align-items: center;             /* Center items horizontally */
-            justify-content: center;         /* Center items vertically */
-            min-height: 100vh;               /* Ensure the page takes up the full viewport height */
-            padding: 20px;                   /* Add some padding around the edges of the page */
-        }
-
-        /*
-         * 2. Main Container Styles (for Splash, Intro, Quiz, Scoreboard pages)
-         * These styles apply to all main content boxes.
-         * -----------------------------------------------------------------------------
-         */
-        .quiz-container, .intro-page-container, .splash-page-container, .confirmation-modal {
-            background-color: #ffffff;       /* White background for the main content box */
-            border-radius: 25px;             /* Even more rounded corners for a super soft look */
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); /* A deeper, more prominent shadow */
-            padding: 40px;                   /* More inside space around the content */
-            width: 100%;                     /* Take full width available */
-            max-width: 750px;                /* Slightly wider on large screens */
-            text-align: center;              /* Center all text inside these containers */
-            border: 6px solid #6366f1;       /* A bold, vibrant indigo border */
-            position: relative;              /* Important for positioning elements INSIDE this container (like the timer) */
-            overflow: hidden;                /* Ensure shadows/borders look good */
-        }
-
-        /*
-         * 3. Headings & Titles
-         * -----------------------------------------------------------------------------
-         */
-        h1 {
-            color: #4338ca;                  /* A deep, rich indigo for the main title */
-            font-size: 3rem;                 /* Make the title even bigger and more impactful! */
-            font-weight: 900;                /* Extra, extra bold */
-            margin-bottom: 35px;             /* More space below the title */
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.15); /* A more pronounced shadow for depth */
-        }
-
-        /*
-         * 4. User ID Display
-         * -----------------------------------------------------------------------------
-         */
-        #current-user-display {
-            position: fixed;                 /* Keep this in the same spot even when scrolling */
-            top: 10px;                        /* A little more from the top */
-            left: 10px;                       /* A little more from the left */
-            background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent white background */
-            color: #4a5568;                  /* Darker gray text */
-            font-size: 0.85rem;              /* Slightly larger text for the ID */
-            padding: 6px 12px;               /* More padding around the text */
-            border-radius: 12px;             /* More rounded corners */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* A soft shadow */
-            z-index: 50;                     /* Make sure it's on top of most other things */
-            backdrop-filter: blur(3px);      /* Subtle blur effect for modern look */
-        }
-
-        /*
-         * 5. Introduction Page Specific Styles
-         * -----------------------------------------------------------------------------
-         */
-        .intro-page-container p {
-            font-size: 1.3rem;               /* Even larger paragraph text */
-            color: #4a5568;                  /* Slightly darker gray text color */
-            margin-bottom: 20px;             /* More space below paragraphs */
-            line-height: 1.7;                /* More space between lines for readability */
-        }
-        .intro-page-container ul {
-            text-align: left;                /* Align list items to the left */
-            margin: 0 auto 40px;             /* Center the list and add more space below */
-            max-width: 550px;                /* Slightly wider list width */
-            list-style-type: '🚀 ';           /* Custom emoji bullet points! */
-            padding-left: 30px;              /* More indent for bullet points */
-            color: #556070;                  /* Softer gray color for list text */
-            font-size: 1.2rem;               /* Good size for list text */
-            line-height: 1.8;
-        }
-        .intro-page-container ul li {
-            margin-bottom: 10px;             /* More space between list items */
-        }
-
-        /*
-         * 6. Confirmation Modal Styles
-         * -----------------------------------------------------------------------------
-         */
-        .modal-overlay {
-            position: fixed;                 /* Stick to the screen */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6); /* Darker semi-transparent black background */
-            display: flex;                   /* Use flexbox to center the modal box */
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;                   /* Make sure it's on top of everything else */
-            backdrop-filter: blur(5px);      /* Stronger blur effect for modal */
-        }
-        .confirmation-modal {
-            background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%); /* Subtle gradient for modal background */
-            border-radius: 20px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
-            padding: 30px;
-            max-width: 500px;
-            border: 3px solid #6366f1; /* Matching border */
-        }
-        .confirmation-modal p {
-            font-size: 1.6rem;               /* Bigger text for the confirmation question */
-            color: #4338ca;                  /* Deep indigo text */
-            font-weight: 700;                /* Bolder */
-            margin-bottom: 35px;             /* More space below the question */
-        }
-        .modal-buttons {
-            display: flex;                   /* Use flexbox for buttons in the modal */
-            justify-content: center;         /* Center the buttons */
-            gap: 25px;                       /* More space between the buttons */
-        }
-
-        /*
-         * 7. Timer Display
-         * -----------------------------------------------------------------------------
-         */
-        #timer-display {
-            position: absolute;              /* Position the timer independently from other content */
-            top: 25px;                       /* 25px from the top of its parent (.quiz-container) */
-            right: 25px;                     /* 25px from the right of its parent */
-            background-color: #fecaca;       /* Softer red background for the timer */
-            color: #b91c1c;                  /* Darker red text */
-            padding: 10px 18px;              /* More padding around the time text */
-            border-radius: 15px;             /* More rounded corners for the timer box */
-            font-weight: bold;               /* Make the text bold */
-            font-size: 1.3rem;               /* Slightly larger size for the timer */
-            border: 3px solid #ef4444;       /* A solid red border */
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* A more prominent shadow */
-            transition: all 0.3s ease;       /* Smooth transition for visual changes */
-        }
-        #timer-display.time-low {
-            background-color: #fca5a5;
-            color: #dc2626;
-            animation: pulse-red 1s infinite alternate; /* Pulsing animation when time is low */
-        }
-
-        @keyframes pulse-red {
-            from { transform: scale(1); opacity: 1; }
-            to { transform: scale(1.05); opacity: 0.8; }
-        }
-
-        /*
-         * 8. Question & Options
-         * -----------------------------------------------------------------------------
-         */
-        #question-display {
-            font-size: 1.8rem;               /* Even bigger and easier-to-read question text */
-            color: #334155;                  /* Dark gray for questions */
-            margin-bottom: 30px;             /* More space below the question */
-            font-weight: 700;                /* Bolder */
-            line-height: 1.5;
-        }
-
-        .options-container {
-            display: flex;                   /* Use flexbox for option arrangement */
-            flex-direction: column;          /* Stack options vertically */
-            gap: 18px;                       /* More space between answer options */
-            margin-bottom: 30px;             /* More space below the options */
-            align-items: flex-start;         /* Align options to the left */
-            padding-left: 20px;              /* Indent options a bit */
-        }
-
-        .option-label {
-            display: flex;                   /* Use flexbox to align radio button and text */
-            align-items: center;             /* Vertically center radio button and text */
-            background: linear-gradient(90deg, #e0f7fa 0%, #e0f2fe 100%); /* Subtle gradient for options */
-            padding: 18px 25px;              /* More padding inside each option box */
-            border-radius: 15px;             /* More rounded corners for options */
-            cursor: pointer;                 /* Change cursor to a hand when hovering */
-            width: 100%;                     /* Option takes full width of its container */
-            text-align: left;                /* Align text to the left within the label */
-            font-size: 1.2rem;               /* Easy-to-read option text size */
-            color: #2e4a68;                  /* Darker blue for option text */
-            border: 2px solid #90cdf4;       /* A lighter blue border */
-            transition: all 0.3s ease;       /* Smooth hover and state change effects */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* Soft shadow for options */
-        }
-
-        .option-label:hover {
-            background: linear-gradient(90deg, #cceeff 0%, #b3e5fc 100%); /* Brighter gradient on hover */
-            border-color: #4299e1;           /* Brighter border on hover */
-            transform: translateY(-3px);     /* Lifts the option slightly on hover */
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* More pronounced shadow on hover */
-        }
-
-        /* Style for selected option */
-        .option-label input[type="radio"]:checked + span {
-            color: #4c51bf; /* Darker blue when selected */
-            font-weight: 600;
-        }
-
-        /* Style for disabled (already answered or time-out) options */
-        .option-label.disabled {
-            background-color: #f8fafc;       /* Even lighter, faded background when disabled */
-            color: #a0aec0;                  /* Faded text when disabled */
-            cursor: not-allowed;             /* Show "no-go" cursor */
-            border-color: #e2e8f0;           /* Faded border */
-            transform: none;                 /* No lift when disabled */
-            box-shadow: none;                /* No shadow when disabled */
-        }
-
-        .option-label input[type="radio"] {
-            margin-right: 20px;              /* More space between radio button and text */
-            transform: scale(1.6);           /* Make radio buttons even bigger */
-            accent-color: #4c51bf;           /* Indigo color for the radio button dot */
-            min-width: 25px; /* ensure radio button has enough space */
-            min-height: 25px;
-        }
-
-        /*
-         * 9. Feedback Messages (Correct/Incorrect)
-         * -----------------------------------------------------------------------------
-         */
-        .feedback-message {
-            font-size: 1.3rem;               /* Good size for feedback text */
-            font-weight: bold;               /* Bold feedback */
-            margin-top: 25px;
-            margin-bottom: 25px;
-            padding: 15px;                   /* More padding inside the message box */
-            border-radius: 10px;             /* Rounded corners */
-            display: none;                   /* Hidden by default, shown by JavaScript */
-            transition: all 0.3s ease;       /* Smooth transition for showing/hiding */
-        }
-        .feedback-correct {
-            background-color: #d1fae5;       /* Light green background */
-            color: #065f46;                  /* Dark green text */
-            border: 3px solid #34d399;       /* Green border */
-            box-shadow: 0 4px 10px rgba(52, 211, 153, 0.3); /* Green shadow */
-        }
-        .feedback-incorrect {
-            background-color: #fee2e2;       /* Light red background */
-            color: #991b1b;                  /* Dark red text */
-            border: 3px solid #ef4444;       /* Red border */
-            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); /* Red shadow */
-        }
-
-        /*
-         * 10. Navigation Buttons (Prev, Next, Submit)
-         * -----------------------------------------------------------------------------
-         */
-        .navigation-buttons {
-            display: flex;                   /* Use flexbox for button arrangement */
-            justify-content: space-between;  /* Space out the buttons evenly */
-            margin-top: 40px;                /* More space above the buttons */
-            gap: 20px;                       /* More space between individual buttons */
-        }
-
-        .quiz-button {
-            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); /* Indigo to purple gradient */
-            color: white;                    /* White text on buttons */
-            padding: 15px 30px;              /* More padding inside the buttons */
-            border-radius: 12px;             /* Nicely rounded corners for buttons */
-            font-size: 1.2rem;               /* Larger text size for buttons */
-            font-weight: 700;                /* Bolder text */
-            cursor: pointer;                 /* Show hand cursor on hover */
-            border: none;                    /* No default border */
-            transition: all 0.3s ease;       /* Smooth hover animations */
-            flex-grow: 1;                    /* Make buttons grow to fill available space */
-            max-width: 220px;                /* Slightly wider button limit */
-            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3); /* Soft shadow matching gradient */
-        }
-
-        .quiz-button:hover {
-            background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%); /* Darker gradient on hover */
-            transform: translateY(-5px);     /* Lifts the button more significantly on hover */
-            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4); /* More pronounced shadow on hover */
-        }
-
-        .quiz-button:disabled {
-            background: #cbd5e1;             /* Light gray background when disabled */
-            color: #64748b;                  /* Darker gray text */
-            cursor: not-allowed;             /* Show "not allowed" cursor */
-            transform: translateY(0);        /* No lift when disabled */
-            box-shadow: none;                /* No shadow when disabled */
-        }
-
-        #submit-quiz-button {
-            background: linear-gradient(90deg, #10b981 0%, #059669 100%); /* Green gradient for submit */
-            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
-        }
-        #submit-quiz-button:hover {
-            background: linear-gradient(90deg, #059669 0%, #047857 100%);
-            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-        }
-
-        /*
-         * 11. Score Display
-         * -----------------------------------------------------------------------------
-         */
-        #score-display {
-            font-size: 2.2rem;               /* Bigger score display text */
-            font-weight: bold;               /* Bold score */
-            color: #10b981;                  /* Green color for the score */
-            margin-top: 50px;                /* More space above the score display */
-            padding: 25px;                   /* More padding inside the score box */
-            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); /* Greenish gradient */
-            border-radius: 20px;             /* More rounded corners */
-            border: 4px solid #34d399;       /* Green border */
-            box-shadow: 0 8px 20px rgba(52, 211, 153, 0.3); /* Green shadow */
-            display: none;                   /* Hidden by default, shown by JavaScript */
-            animation: fadeInScale 0.5s ease-out; /* Smooth entrance animation */
-        }
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        #score-display p {
-            margin-bottom: 10px;
-        }
-
-        #score-display span {
-            color: #4f46e5; /* Highlight numbers with indigo */
-            font-weight: 900;
-        }
-
-
-        /*
-         * 12. Scoreboard Page Specific Styles
-         * -----------------------------------------------------------------------------
-         */
-        #scoreboard-list {
-            list-style: none;                /* Remove default list bullets */
-            padding: 0;                      /* Remove default list padding */
-            margin-top: 25px;                /* More space above the list */
-        }
-        #scoreboard-list li {
-            font-size: 1.2rem;               /* Slightly larger for scoreboard entries */
-            font-weight: 500;                /* Medium bold */
-            padding: 15px 20px;              /* More padding inside each score entry */
-            border-radius: 12px;             /* Rounded corners for entries */
-            margin-bottom: 12px;             /* More space between entries */
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08); /* Slightly stronger shadow for each entry */
-            display: flex;                   /* Use flexbox to space out name and score */
-            justify-content: space-between;  /* Push name to left, score to right */
-            align-items: center;             /* Vertically center content */
-            background-color: #f1f5f9;       /* Light gray background for entries */
-            border: 1px solid #e2e8f0;       /* Light border */
-            transition: all 0.2s ease;
-        }
-        #scoreboard-list li:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.12);
-        }
-        /* Special style for the top score on the scoreboard! */
-        #scoreboard-list li.bg-yellow-100 {
-            background: linear-gradient(90deg, #fffacd 0%, #ffe082 100%); /* Golden gradient! */
-            color: #a27c00;                  /* Darker yellow text */
-            border-color: #ffd700;           /* Gold border */
-            font-size: 1.4rem;               /* Bigger font for the top score */
-            font-weight: bold;               /* Extra bold */
-            box-shadow: 0 6px 18px rgba(255, 215, 0, 0.4); /* Shinier shadow */
-            animation: pulse-gold 1.5s infinite alternate; /* Gentle pulse for the winner */
-        }
-        @keyframes pulse-gold {
-            from { transform: scale(1) translateY(0); opacity: 1; }
-            to { transform: scale(1.02) translateY(-2px); opacity: 0.95; }
-        }
-
-        .delete-score-button {
-            background-color: #ef4444; /* Red for delete */
-            color: white;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            border: none;
-            transition: background-color 0.2s ease, transform 0.2s ease;
-            margin-left: 15px; /* Space from score text */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .delete-score-button:hover {
-            background-color: #dc2626;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        .delete-score-button:active {
-            transform: translateY(0);
-        }
-
-        /* Question Indicators */
-        #question-indicators-container {
-            display: flex;
-            flex-wrap: wrap; /* Allow indicators to wrap to the next line */
-            justify-content: center;
-            gap: 8px; /* Space between indicators */
-            margin-bottom: 30px; /* Space below indicators */
-            padding: 10px;
-            background-color: #f8fafc;
-            border-radius: 15px;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); /* Subtle inner shadow */
-            border: 1px solid #e2e8f0;
-        }
-
-        .question-indicator {
-            width: 28px; /* Size of the circles */
-            height: 28px;
-            border-radius: 50%; /* Make them perfectly round */
-            background-color: #ef4444; /* Default: Red for unanswered */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 0.8rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: background-color 0.3s ease, border 0.3s ease, transform 0.2s ease;
-            border: 2px solid transparent; /* Default transparent border */
-            cursor: pointer; /* Make them clickable */
-        }
-
-        .question-indicator:hover:not(.current) {
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .question-indicator.answered {
-            background-color: #10b981; /* Green for answered */
-        }
-
-        .question-indicator.current {
-            border: 3px solid #6366f1; /* Highlight current question with indigo border */
-            transform: scale(1.1); /* Slightly enlarge current question */
-            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4); /* Glow effect for current */
-        }
-        .question-indicator.current.answered { /* Current and answered */
-            border: 3px solid #34d399; /* Green border for answered current */
-            box-shadow: 0 4px 10px rgba(52, 211, 153, 0.4); /* Green glow */
-        }
-
-
-        /*
-         * 13. Responsive Adjustments for Smaller Screens (Phones & Tablets)
-         * Tailwind handles a lot, but some custom tweaks are needed.
-         * -----------------------------------------------------------------------------
-         */
-        @media (max-width: 768px) { /* Adjust for medium screens (tablets) */
-            .quiz-container, .intro-page-container, .splash-page-container, .confirmation-modal {
-                padding: 30px;
-                border-radius: 20px;
-                max-width: 95%;
-            }
-            h1 {
-                font-size: 2.5rem;
-                margin-bottom: 25px;
-            }
-            .intro-page-container p {
-                font-size: 1.15rem;
-            }
-            .intro-page-container ul {
-                font-size: 1rem;
-                list-style-type: '👉 '; /* Simpler bullet on smaller screens */
-            }
-            .question-indicator {
-                width: 24px;
-                height: 24px;
-                font-size: 0.75rem;
-            }
-            #question-indicators-container {
-                gap: 6px;
-            }
-        }
-
-        @media (max-width: 600px) { /* When the screen is 600 pixels wide or smaller */
-            h1 {
-                font-size: 2rem;             /* Smaller title on small screens */
-                margin-bottom: 20px;
-            }
-            #timer-display {
-                top: 15px;                   /* Move timer closer to corner */
-                right: 15px;
-                padding: 8px 15px;           /* Smaller padding */
-                font-size: 1.1rem;           /* Smaller font for timer */
-            }
-            #question-display {
-                font-size: 1.4rem;           /* Smaller question text */
-                margin-bottom: 20px;
-            }
-            .options-container {
-                padding-left: 10px;             /* Reduce indent on small screens */
-                gap: 12px;                   /* Smaller gap between options */
-            }
-            .option-label {
-                font-size: 1.05rem;             /* Smaller option text */
-                padding: 14px 18px;          /* Smaller padding in option boxes */
-                border-radius: 12px;
-            }
-            .option-label input[type="radio"] {
-                transform: scale(1.4);       /* Slightly smaller radio buttons */
-                margin-right: 15px;
-            }
-            .navigation-buttons {
-                flex-direction: column;      /* Stack buttons vertically on small screens */
-                gap: 15px;                   /* Smaller gap between stacked buttons */
-            }
-            .quiz-button {
-                max-width: 100%;             /* Buttons take full width */
-                font-size: 1.1rem;
-                padding: 12px 25px;
-            }
-            #score-display {
-                font-size: 1.8rem;           /* Smaller score display text */
-                padding: 20px;
-            }
-            .confirmation-modal {
-                padding: 25px;               /* Smaller padding in modal */
-            }
-            .confirmation-modal p {
-                font-size: 1.3rem;           /* Smaller text in modal */
-                margin-bottom: 25px;
-            }
-            .modal-buttons {
-                flex-direction: column;      /* Stack modal buttons too */
-                gap: 15px;
-            }
-            #scoreboard-list li {
-                font-size: 1rem;
-                padding: 10px 15px;
-            }
-        }
-    </style>
 </head>
 <body>
     <!-- USER ID DISPLAY (Always visible for multi-user apps) -->
@@ -570,9 +22,12 @@
     <div id="splash-page" class="splash-page-container hidden">
         <h1>Welcome, Future Coder! 👋</h1>
         <p class="text-xl mb-6 text-gray-700">What's your awesome name?</p>
-        <input type="text" id="student-name-input" placeholder="Enter your name here"
+        <input type="text" id="student-name-input" placeholder="Enter your name here (or sign in with Google)"
                class="w-full max-w-sm p-4 text-center text-xl border-4 border-blue-300 rounded-xl focus:outline-none focus:border-blue-500 transition duration-300">
         <button id="start-quiz-from-splash-button" class="quiz-button mt-8">Start Your Adventure!</button>
+        <button id="sign-in-google-button" class="quiz-button bg-red-600 hover:bg-red-700 mt-4 flex items-center justify-center mx-auto">
+            <i class="fab fa-google mr-3"></i> Sign in with Google
+        </button>
         <button id="view-all-scores-button" class="quiz-button bg-purple-600 hover:bg-purple-700 mt-4">View All Scores</button>
     </div>
 
@@ -1216,15 +671,22 @@
                         return Promise.resolve({ user: { uid: crypto.randomUUID() } });
                     },
                     signInWithCustomToken: () => Promise.reject("Auth (dummy/fallback): Custom token not supported without Firebase config."),
+                    signInWithPopup: (provider) => {
+                        console.warn("Auth (dummy/fallback): Tried to sign in with popup but auth is not initialized. Providing dummy user.");
+                        return Promise.resolve({ user: { uid: crypto.randomUUID(), displayName: "Dummy User", email: "dummy@example.com" } });
+                    },
                     onAuthStateChanged: (callback) => {
                         const dummyUser = { uid: crypto.randomUUID() };
                         setTimeout(() => callback(dummyUser), 0); // Call immediately to simulate auth state change
                         return () => {}; // Return a dummy unsubscribe function
+                    },
+                    GoogleAuthProvider: {
+                        PROVIDER_ID: "google.com" // Mock provider ID
                     }
                 }),
                 firestore: () => ({
                     collection: (path) => ({
-                        addDoc: (data) => {
+                        add: (data) => { // Use 'add' for compat
                             console.warn(`Firestore (dummy/fallback): Tried to add doc to '${path}' but database is not initialized. Data:`, data);
                             return Promise.resolve({ id: 'dummy-id' });
                         },
@@ -1241,11 +703,12 @@
                             return () => console.log('Dummy Firestore unsubscribe (direct)');
                         }
                     }),
-                    doc: () => ({}),
-                    deleteDoc: (docRef) => {
-                        console.warn(`Firestore (dummy/fallback): Tried to delete doc but database is not initialized.`);
-                        return Promise.resolve();
-                    }
+                    doc: (path) => ({ // Mock doc for delete
+                        delete: () => {
+                            console.warn(`Firestore (dummy/fallback): Tried to delete doc from '${path}' but database is not initialized.`);
+                            return Promise.resolve();
+                        }
+                    })
                 })
             };
         }
@@ -1257,15 +720,15 @@
          */
         function initializeFirebaseServices() {
             try {
-                // Check if firebaseConfig is provided and has a projectId for actual Firebase init
-                if (window.firebase && firebaseConfig && firebaseConfig.projectId) {
+                // Check if firebase object exists and has initializeApp method
+                if (typeof firebase !== 'undefined' && typeof firebase.initializeApp === 'function' && firebaseConfig && firebaseConfig.projectId) {
                     app = firebase.initializeApp(firebaseConfig);
                     auth = firebase.auth(); // Get auth service instance
                     db = firebase.firestore(); // Get firestore service instance
                     firebaseInitializedSuccessfully = true; // Set to true ONLY if all steps above succeed
                     console.log("Firebase initialized successfully with provided config.");
                 } else {
-                    console.warn("Firebase SDK not found (window.firebase is undefined) or configuration is missing/incomplete. Scoreboard features will be disabled. Ensure Firebase compat SDKs are loaded.");
+                    console.warn("Firebase SDK not found (window.firebase is undefined) or configuration is missing/incomplete. Scoreboard features will be disabled. Ensure Firebase compat SDKs are loaded correctly.");
                     // Assign dummy functions/objects if Firebase itself isn't loaded or configured
                     const dummyFirebase = createDummyFirebaseApp(); // Create a dummy firebase global object
                     app = {}; // An empty app object
@@ -1315,6 +778,7 @@
             const splashPage = document.getElementById('splash-page');
             const nameInput = document.getElementById('student-name-input');
             const startQuizFromSplashButton = document.getElementById('start-quiz-from-splash-button');
+            const signInGoogleButton = document.getElementById('sign-in-google-button'); // New Google button
             const currentUserDisplay = document.getElementById('current-user-display');
             const viewAllScoresButton = document.getElementById('view-all-scores-button');
 
@@ -1347,6 +811,53 @@
 
             let scoreToDeleteDocId = null; // Variable to hold the ID of the score to be deleted
 
+            // AudioContext for sound effects
+            let audioContext;
+
+            /**
+             * Plays a simple correct answer sound.
+             */
+            function playCorrectSound() {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // High pitch
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime); // Volume
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2); // Fade out quickly
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2); // Play for 0.2 seconds
+            }
+
+            /**
+             * Plays a simple incorrect answer sound.
+             */
+            function playIncorrectSound() {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(200, audioContext.currentTime); // Low pitch
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime); // Volume
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3); // Fade out
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3); // Play for 0.3 seconds
+            }
+
 
             // --- 2. Firebase Authentication Listener ---
             // This runs as soon as Firebase determines the user's login state.
@@ -1355,42 +866,43 @@
             if (auth && typeof auth.onAuthStateChanged === 'function') {
                 auth.onAuthStateChanged(async (user) => {
                     if (user) {
-                        userId = user.uid; // User is logged in
+                        userId = user.uid;
+                        // Prioritize Google display name, then email, then anonymous
+                        userName = user.displayName || user.email || `Anonymous User (${user.uid.substring(0, 6)}...)`;
+                        console.log("Firebase Auth Ready. User ID:", userId, "User Name:", userName);
                     } else {
                         // If no user, try anonymous sign-in
                         try {
-                            // Only try real anonymous sign-in if Firebase was successfully initialized
                             if (firebaseInitializedSuccessfully) {
                                await auth.signInAnonymously();
                                userId = auth.currentUser.uid;
+                               userName = `Anonymous User (${userId.substring(0, 6)}...)`;
                             } else {
                                 console.warn("Real Firebase auth not available. Using a random local ID for the user for local functionality.");
-                                userId = crypto.randomUUID(); // Directly assign a new UUID if Firebase is not connected
+                                userId = crypto.randomUUID();
+                                userName = `Local User (${userId.substring(0, 6)}...)`;
                             }
                         } catch (error) {
-                            // Explicitly handle common Firebase Auth errors
                             if (error.code === 'auth/admin-restricted-operation') {
-                                console.error("Firebase Authentication Error: Anonymous sign-in is restricted by project settings. Scoreboard will not function with real data. Please ensure 'Anonymous' sign-in method is enabled in Firebase Console > Authentication > Sign-in method, or consider adjusting Identity Platform settings if applicable.");
-                                userId = crypto.randomUUID(); // Still provide a local ID for UI to function
+                                console.error("Firebase Authentication Error: Anonymous sign-in is restricted by project settings. Scoreboard will not function with real data.");
                             } else if (error.code === 'auth/network-request-failed') {
                                 console.error("Firebase Authentication Error: Network request failed. Please check your internet connection.");
-                                userId = crypto.randomUUID();
                             } else {
                                 console.error("General error during anonymous sign-in attempt (real or dummy):", error);
-                                userId = crypto.randomUUID();
                             }
+                            userId = crypto.randomUUID();
+                            userName = `Fallback User (${userId.substring(0, 6)}...)`;
                         }
                     }
                     isAuthReady = true; // Firebase (or fallback ID) is now ready
-                    console.log("Firebase Auth Ready. User ID:", userId);
-                    // Log user ID to console for easy copying for admin testing
                     console.log("Current User ID (copy this to `adminUserIds` array in code to test admin features):", userId);
-                    displayCurrentUserId(); // Display the user's ID on the screen
+                    displayCurrentUserId(); // Display the user's ID/name on the screen
                     showSplashPage();       // Show the initial page for name entry
                 });
             } else {
                 console.warn("auth object or onAuthStateChanged method is not available. Proceeding without Firebase authentication.");
                 userId = crypto.randomUUID(); // Fallback to a random ID if auth is not available
+                userName = `Local User (${userId.substring(0, 6)}...)`;
                 isAuthReady = true; // Mark as ready to proceed with UI
                 displayCurrentUserId();
                 showSplashPage();
@@ -1399,12 +911,41 @@
 
             // --- 3. Initial Firebase Sign-in Attempt (if auth token exists) ---
             // This section was for Canvas environment, set to null for local testing.
-            // If you uncomment and want to use custom tokens locally, you'd manage them.
-            // Note: anonymous sign-in is already handled by onAuthStateChanged based on firebaseConfig.projectId
-            if (initialAuthToken && firebaseInitializedSuccessfully && auth && typeof auth.signInWithCustomToken === 'function') { // Only attempt if token and Firebase is truly initialized
+            if (initialAuthToken && firebaseInitializedSuccessfully && auth && typeof auth.signInWithCustomToken === 'function') {
                  auth.signInWithCustomToken(initialAuthToken).catch((error) => {
                      console.error("Error signing in with custom token:", error);
                  });
+            }
+
+            /**
+             * Handles Google Sign-In.
+             */
+            async function signInWithGoogle() {
+                if (!firebaseInitializedSuccessfully || !auth || typeof auth.signInWithPopup !== 'function' || typeof firebase.auth.GoogleAuthProvider === 'undefined') {
+                    console.error("Firebase Auth or GoogleAuthProvider not available. Cannot sign in with Google.");
+                    alert("Google Sign-In is not available. Please check Firebase configuration.");
+                    return;
+                }
+
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    await auth.signInWithPopup(provider);
+                    // onAuthStateChanged will handle updating UI
+                    console.log("Signed in with Google!");
+                } catch (error) {
+                    console.error("Error during Google Sign-In:", error);
+                    let errorMessage = "Failed to sign in with Google.";
+                    if (error.code === 'auth/popup-closed-by-user') {
+                        errorMessage = "Sign-in popup closed. Please try again.";
+                    } else if (error.code === 'auth/cancelled-popup-request') {
+                        errorMessage = "Sign-in already in progress or blocked by browser.";
+                    } else if (error.code === 'auth/network-request-failed') {
+                        errorMessage = "Network error. Check your internet connection.";
+                    } else if (error.code === 'auth/operation-not-allowed') {
+                        errorMessage = "Google Sign-in is not enabled in your Firebase project. Please enable it in Firebase Console > Authentication > Sign-in method.";
+                    }
+                    alert(errorMessage);
+                }
             }
 
 
@@ -1567,10 +1108,19 @@
                         label.classList.add('disabled'); // Add disabled style to label
                         if (userAnswers[currentQuestionIndex] === input.value) {
                             input.checked = true; // Mark the previously selected answer
+                            // Also show feedback icon if re-loading an answered question
+                            const feedbackIcon = document.createElement('span');
+                            feedbackIcon.className = 'feedback-icon';
+                            if (input.value === question.correctAnswer) {
+                                feedbackIcon.innerHTML = '&#9989;'; // ✅
+                            } else {
+                                feedbackIcon.innerHTML = '&#10060;'; // ❌
+                            }
+                            label.appendChild(feedbackIcon);
                         }
                     } else {
                         // Only add event listener if not already answered
-                        input.addEventListener('change', () => checkAnswer(input.value));
+                        input.addEventListener('change', () => checkAnswer(input.value, label));
                     }
 
                     // Add the whole label (with button and text) to the options container
@@ -1579,7 +1129,12 @@
 
                 // If question has been answered, display feedback immediately
                 if (userAnswers[currentQuestionIndex] !== null) {
-                    checkAnswer(userAnswers[currentQuestionIndex], true); // Show feedback but don't re-save answer
+                    // Find the label of the previously selected option to show feedback icon
+                    const previouslySelectedOption = Array.from(optionsContainer.querySelectorAll('input[type="radio"]'))
+                                                       .find(radio => radio.value === userAnswers[currentQuestionIndex]);
+                    if (previouslySelectedOption) {
+                        checkAnswer(userAnswers[currentQuestionIndex], previouslySelectedOption.parentElement, true); // Show feedback but don't re-save answer
+                    }
                 }
 
                 // Update button states (Previous/Next/Submit)
@@ -1590,9 +1145,10 @@
             /**
              * Checks the selected answer against the correct answer and provides feedback.
              * @param {string} selectedOption - The option selected by the user (e.g., 'A', 'B', 'C').
+             * @param {HTMLElement} selectedLabel - The HTML label element of the selected option.
              * @param {boolean} isReLoad - True if this function is called during a page load, false if it's a new user selection.
              */
-            function checkAnswer(selectedOption, isReLoad = false) {
+            function checkAnswer(selectedOption, selectedLabel, isReLoad = false) {
                 const currentQuestion = selectedQuestions[currentQuestionIndex]; // Use selectedQuestions
 
                 if (!isReLoad) { // Only save the answer if it's a new selection, not a reload
@@ -1608,16 +1164,27 @@
                     radio.parentElement.classList.add('disabled'); // Add disabled style to label
                 });
 
-                // Remove previous feedback classes
+                // Remove previous feedback classes and icons
                 feedbackMessage.className = 'feedback-message';
+                optionsContainer.querySelectorAll('.feedback-icon').forEach(icon => icon.remove());
+
+
+                // Add feedback icon next to the selected option
+                const feedbackIcon = document.createElement('span');
+                feedbackIcon.className = 'feedback-icon';
+                selectedLabel.appendChild(feedbackIcon);
 
                 // Check if the selected answer is correct
                 if (selectedOption === currentQuestion.correctAnswer) {
                     feedbackMessage.textContent = "That's correct! 🎉";
                     feedbackMessage.classList.add('feedback-correct');
+                    feedbackIcon.innerHTML = '&#9989;'; // ✅
+                    if (!isReLoad) playCorrectSound();
                 } else {
                     feedbackMessage.textContent = `Oops! The correct answer was ${currentQuestion.correctAnswer}. 🤔`;
                     feedbackMessage.classList.add('feedback-incorrect');
+                    feedbackIcon.innerHTML = '&#10060;'; // ❌
+                    if (!isReLoad) playIncorrectSound();
                 }
                 feedbackMessage.style.display = 'block'; // Show the feedback message
                 updateQuestionIndicators(); // Update indicators after an answer is checked
@@ -1673,21 +1240,26 @@
                     }
                 });
 
+                // Determine the name to save
+                let nameToSave = userName; // Default to the current userName (could be from Google or anonymous)
+                if (!nameToSave || nameToSave.startsWith('Anonymous User') || nameToSave.startsWith('Local User')) {
+                    // If it's an anonymous or local user, use the name from the input field
+                    nameToSave = nameInput.value.trim() || `Anonymous User (${userId.substring(0, 6)}...)`;
+                }
+
                 // Save score to Firestore ONLY if Firebase is genuinely initialized and ready for DB ops
-                // Check if db object exists and has collection method
-                if (firebaseInitializedSuccessfully && isAuthReady && userName && db && typeof db.collection === 'function') {
+                if (firebaseInitializedSuccessfully && isAuthReady && db && typeof db.collection === 'function') {
                     const scoresCollectionRef = db.collection(`artifacts/${appId}/public/data/quiz_scores`);
                     try {
                         await scoresCollectionRef.add({
-                            name: escapeHTML(userName), // Sanitize name before saving to prevent XSS
+                            name: escapeHTML(nameToSave), // Sanitize name before saving to prevent XSS
                             score: score,
                             totalQuestions: selectedQuestions.length, // Use selectedQuestions.length
-                            timestamp: new Date()
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp() // Use server timestamp
                         });
                         console.log("Score saved successfully to Firebase!");
                     } catch (e) {
                         console.error("Error adding document to Firestore (Scoreboard will not update with this score): ", e);
-                        // Provide more specific feedback for common errors in console
                         if (e.code === 'permission-denied') {
                             console.error("Firebase Permission Error: Ensure your Firestore Security Rules allow 'create' and 'update' for authenticated users on 'artifacts/{appId}/public/data/quiz_scores'.");
                         } else if (e.code === 'unavailable' || e.code === 'unauthenticated') {
@@ -1698,7 +1270,6 @@
                     let reason = [];
                     if (!firebaseInitializedSuccessfully) reason.push("Firebase not initialized");
                     if (!isAuthReady) reason.push("Authentication not ready");
-                    if (!userName) reason.push("User name is missing");
                     if (!(db && typeof db.collection === 'function')) reason.push("Firestore DB service not available");
                     console.warn(`Score not saved: ${reason.join(', ')}. Scoreboard will not update for this entry.`);
                 }
@@ -1764,7 +1335,7 @@
                 }
 
                 // Check if db object exists and has doc and delete methods
-                if (!firebaseInitializedSuccessfully || !isAuthReady || !(db && typeof db.doc === 'function' && typeof db.deleteDoc === 'function')) {
+                if (!firebaseInitializedSuccessfully || !isAuthReady || !(db && typeof db.collection === 'function' && typeof db.collection().doc === 'function')) { // Also check collection for pathway
                     console.error("Cannot delete score: Firebase not initialized or authenticated, or DB service not fully available. Check connection/config.");
                     alert("Failed to delete score. Firebase connection issue.");
                     scoreToDeleteDocId = null;
@@ -1772,19 +1343,22 @@
                 }
 
                 try {
-                    const docRef = db.doc(`artifacts/${appId}/public/data/quiz_scores/${scoreToDeleteDocId}`);
+                    const docRef = db.collection(`artifacts/${appId}/public/data/quiz_scores`).doc(scoreToDeleteDocId); // Use collection().doc()
                     await docRef.delete(); // Use docRef.delete() with the compat library
-                    console.log("Score deleted successfully by admin:", scoreToDeleteDocId);
+                    console.log(`Score deleted successfully by admin: ${scoreToDeleteDocId}`);
                     scoreToDeleteDocId = null; // Clear the stored ID
                     // The onSnapshot listener in loadScoreboard will automatically update the UI
                 } catch (e) {
                     console.error("Error deleting document:", e);
+                    console.error(`Firebase Error Code: ${e.code}, Message: ${e.message}`); // Log specific error details
                     // Provide user feedback on deletion failure
                     let errorMessage = "Failed to delete score. Please check Firebase permissions.";
                     if (e.code === 'permission-denied') {
-                        errorMessage = "Failed to delete score: Insufficient Firebase permissions. Ensure 'delete' is allowed for authenticated users in Firestore rules.";
+                        errorMessage = `Failed to delete score: Insufficient Firebase permissions. (${e.message})`;
                     } else if (e.code === 'unavailable' || e.code === 'unauthenticated') {
-                        errorMessage = "Failed to delete score: Network or authentication issue.";
+                        errorMessage = `Failed to delete score: Network or authentication issue. (${e.message})`;
+                    } else if (e.code === 'not-found') {
+                        errorMessage = "Failed to delete score: Document not found (it might have been deleted already).";
                     }
                     alert(errorMessage);
                     scoreToDeleteDocId = null; // Clear the stored ID
@@ -1927,7 +1501,13 @@
                     userName = enteredName; // Save the entered name
                     hideAllPages();
                     introPage.classList.remove('hidden');
-                } else {
+                } else if (auth.currentUser && auth.currentUser.isAnonymous) {
+                     // If user is anonymous and hasn't entered a name, proceed anyway but with anonymous name
+                     userName = `Anonymous User (${userId.substring(0, 6)}...)`;
+                     hideAllPages();
+                     introPage.classList.remove('hidden');
+                }
+                else {
                     // Provide visual feedback if name is empty
                     nameInput.placeholder = "Please enter your name!";
                     nameInput.classList.add('border-red-500'); // Add a red border
@@ -1956,13 +1536,13 @@
             }
 
             /**
-             * Displays the current user's unique ID on the page.
+             * Displays the current user's unique ID/Name on the page.
              */
             function displayCurrentUserId() {
                 // Only display ID if Firebase is actually configured and we have a real user ID.
-                // Otherwise, the ID will be a random string for local, non-db operation.
-                if (userId && firebaseInitializedSuccessfully) { // Use firebaseInitializedSuccessfully flag
-                    currentUserDisplay.textContent = `Your ID: ${userId}`;
+                if (userId && firebaseInitializedSuccessfully) {
+                    // Display name if available, otherwise fallback to UID
+                    currentUserDisplay.textContent = `Hello, ${userName || `User ID: ${userId}`}`;
                     currentUserDisplay.classList.remove('hidden');
                 } else {
                     currentUserDisplay.classList.add('hidden'); // Hide if no real Firebase connection
@@ -1974,6 +1554,7 @@
 
             // Splash Page Buttons
             startQuizFromSplashButton.addEventListener('click', startQuizFromSplash);
+            signInGoogleButton.addEventListener('click', signInWithGoogle); // New Google button listener
             viewAllScoresButton.addEventListener('click', loadScoreboard);
 
             // Introduction Page Button
