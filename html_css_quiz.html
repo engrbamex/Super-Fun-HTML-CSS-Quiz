@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Fun HTML & CSS Quiz!</title>
+
+    <!-- We're using Tailwind CSS for quick and easy styling! -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons (like delete) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+    <!-- USER ID DISPLAY (Always visible for multi-user apps) -->
+    <div id="current-user-display" class="fixed top-4 left-4 bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-md shadow-sm z-50 hidden">
+        Your ID:
+    </div>
+
+    <!-- SPLASH PAGE: Name Entry -->
+    <div id="splash-page" class="splash-page-container hidden">
+        <h1>Welcome, Future Coder! 👋</h1>
+        <p class="text-xl mb-6 text-gray-700">What's your awesome name?</p>
+        <input type="text" id="student-name-input" placeholder="Enter your name here"
+               class="w-full max-w-sm p-4 text-center text-xl border-4 border-blue-300 rounded-xl focus:outline-none focus:border-blue-500 transition duration-300">
+        <button id="start-quiz-from-splash-button" class="quiz-button mt-8">Start Your Adventure!</button>
+        <button id="view-all-scores-button" class="quiz-button bg-purple-600 hover:bg-purple-700 mt-4">View All Scores</button>
+    </div>
+
+    <!-- INTRODUCTION PAGE -->
+    <div id="intro-page" class="intro-page-container hidden">
+        <h1>Welcome to the Super Fun HTML & CSS Quiz! 🚀</h1>
+        <p>Are you ready to test your awesome web building knowledge?</p>
+        <p class="font-semibold text-lg text-blue-700">Here's how to play:</p>
+        <ul>
+            <li>You'll get **30 seconds** to answer each question.</li>
+            <li>Click on the **radio button** next to the answer you think is correct.</li>
+            <li>Once you pick an answer, you **can't change it** for that question.</li>
+            <li>Click **"Next Question"** to move on, or **"Previous Question** to review.</li>
+            <li>On the last question, click **"Submit Quiz!"** to see your score!</li>
+            <li>There are **50 questions** in total (randomly picked!). Good luck!</li>
+        </ul>
+        <button id="start-quiz-button" class="quiz-button">Start Quiz!</button>
+    </div>
+
+    <!-- CONFIRMATION MODAL (for starting quiz) -->
+    <div id="confirmation-modal" class="modal-overlay hidden">
+        <div class="confirmation-modal">
+            <p>Are you super ready to start the quiz now?</p>
+            <div class="modal-buttons">
+                <button id="confirm-start-button" class="quiz-button bg-green-500 hover:bg-green-600">Yes, Start!</button>
+                <button id="cancel-start-button" class="quiz-button bg-red-500 hover:bg-red-600">No, Go Back</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONFIRMATION MODAL (for deleting score) -->
+    <div id="delete-confirmation-modal" class="modal-overlay hidden">
+        <div class="confirmation-modal">
+            <p>Are you sure you want to delete this score?</p>
+            <div class="modal-buttons">
+                <button id="confirm-delete-button" class="quiz-button bg-red-500 hover:bg-red-600">Yes, Delete!</button>
+                <button id="cancel-delete-button" class="quiz-button bg-gray-500 hover:bg-gray-600">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN QUIZ CONTAINER (Hidden initially) -->
+    <div class="quiz-container hidden">
+        <div id="timer-display">30s</div>
+        <h1>Super Fun HTML & CSS Quiz! 🚀</h1>
+        <div id="question-indicators-container">
+            <!-- Question indicators will be populated here -->
+        </div>
+        <div id="question-number" class="text-gray-500 text-lg mb-4">Question 1 of 50</div>
+        <div id="question-display"></div>
+        <div id="options-container" class="options-container"></div>
+        <div id="feedback-message" class="feedback-message"></div>
+
+        <div class="navigation-buttons">
+            <button id="prev-button" class="quiz-button" disabled>Previous Question</button>
+            <button id="next-button" class="quiz-button">Next Question</button>
+            <button id="submit-quiz-button" class="quiz-button hidden">Submit Quiz!</button>
+        </div>
+
+        <div id="score-display"></div>
+    </div>
+
+    <!-- SCOREBOARD PAGE (New) -->
+    <div id="scoreboard-page" class="quiz-container hidden">
+        <h1>High Scores! 🏆</h1>
+        <ul id="scoreboard-list" class="mt-8 text-left">
+            <!-- Scores will be loaded here by JavaScript -->
+        </ul>
+        <button id="back-to-home-button" class="quiz-button mt-8">Back to Home</button>
+    </div>
+
+    <!-- Firebase SDKs and ALL Quiz JavaScript -->
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
+
+        // IMPORTANT GLOBAL VARIABLES from the Canvas environment
+        // For local development, this needs to be your actual Firebase project configuration.
+        const appId = 'default-app-id'; // You can keep this as 'default-app-id' or use your actual app ID from Firebase
+
+        // YOUR ACTUAL FIREBASE PROJECT CONFIGURATION IS HERE!
+        // This was provided by the user.
+        const firebaseConfig = {
+            apiKey: "AIzaSyAw5RZuG4KIzLCwJQSiE_c0zM0tK8nrprc",
+            authDomain: "my-quiz-app-scores.firebaseapp.com",
+            projectId: "my-quiz-app-scores",
+            storageBucket: "my-quiz-app-scores.firebasestorage.app",
+            messagingSenderId: "615506800743",
+            appId: "1:615506800743:web:44a5303e67f6d4e6b664c2",
+            measurementId: "G-CWR5D6CL90"
+        };
+        // The initialAuthToken is specific to the Canvas environment and won't work locally.
+        const initialAuthToken = null; // Set to null for local development
+
+
+        // --- ALL 100 Quiz questions are defined here ---
+        const allQuestions = [
+            {
+                "question": "What does HTML stand for?",
+                "options": ["A. Hyper Text Markup Language", "B. Happy Text Making Language", "C. Home Tool Markup Language"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which tag is used to make the biggest heading?",
+                "options": ["A. <h1>", "B. <p>", "C. <div>"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "What does CSS stand for?",
+                "options": ["A. Colorful Style Sheets", "B. Cascading Style Sheets", "C. Creative Style System"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which tag is used to add a picture to your webpage?",
+                "options": ["A. <image>", "B. <img>", "C. <picture>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property changes the color of text?",
+                "options": ["A. text-color", "B. font-color", "C. color"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "What is the main part of an HTML document where all content goes?",
+                "options": ["A. <head>", "B. <body>", "C. <title>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property changes the background color of an element?",
+                "options": ["A. background-color", "B. color-background", "C. bg-color"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "What tag is used to make a paragraph of text?",
+                "options": ["A. <text>", "B. <paragraph>", "C. <p>"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "Which CSS property changes the size of text?",
+                "options": ["A. text-size", "B. font-size", "C. size"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What do you put around HTML tags?",
+                "options": ["A. ( )", "B. { }", "C. < >"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "Which CSS property makes text centered?",
+                "options": ["A. align-text: center", "B. text-align: center", "C. center-text: yes"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What is the correct way to link an external CSS file?",
+                "options": ["A. <link rel='stylesheet' href='style.css'>", "B. <style src='style.css'>", "C. <css>style.css</css>"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which HTML tag is used for an unordered list?",
+                "options": ["A. <list>", "B. <ol>", "C. <ul>"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "Which CSS property adds space inside an element's border?",
+                "options": ["A. margin", "B. padding", "C. space-inside"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which HTML tag is used for a list item?",
+                "options": ["A. <item>", "B. <li>", "C. <list-item>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What is the purpose of the <title> tag in HTML?",
+                "options": ["A. To make text bold", "B. To set the title of the webpage in the browser tab", "C. To create a heading"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property adds space outside an element's border?",
+                "options": ["A. margin", "B. padding", "C. outer-space"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which HTML tag is used to create a link to another page?",
+                "options": ["A. <link>", "B. <href>", "C. <a>"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "Which CSS property changes the type of font (like Arial or Times New Roman)?",
+                "options": ["A. font-type", "B. font-family", "C. text-font"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What does the `src` attribute in an `<img>` tag do?",
+                "options": ["A. Sets the image's size", "B. Tells where the image file is located", "C. Describes the image"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property makes corners round?",
+                "options": ["A. corner-round", "B. border-radius", "C. shape-round"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which HTML tag is used to make text bold or strong?",
+                "options": ["A. <bold>", "B. <strong>", "C. <big>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property adds a border around an element?",
+                "options": ["A. line", "B. frame", "C. border"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "What is the purpose of the `alt` attribute in an `<img>` tag?",
+                "options": ["A. To change the image's color", "B. To provide alternative text if the image doesn't load", "C. To make the image bigger"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property changes how wide an element is?",
+                "options": ["A. length", "B. width", "C. size-x"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which HTML tag is used to group content together?",
+                "options": ["A. <group>", "B. <section>", "C. <div>"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "Which CSS property changes how tall an element is?",
+                "options": ["A. height", "B. length-y", "C. tall"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "What is the correct tag for an ordered list (like a numbered list)?",
+                "options": ["A. <ol>", "B. <list-ordered>", "C. <num-list>"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which CSS property adds a shadow effect to a box?",
+                "options": ["A. shadow-box", "B. box-shadow", "C. drop-shadow"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What is the very first line in an HTML document?",
+                "options": ["A. <!DOCTYPE html>", "B. <start html>", "C. <html version='5'>"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which CSS property makes text italic?",
+                "options": ["A. font-style: italic", "B. text-slant", "C. italic: true"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Where do you usually put your CSS code inside an HTML file?",
+                "options": ["A. In the <body>", "B. In the <style> tags inside the <head>", "C. At the very end of the file"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What is the purpose of the `href` attribute in an `<a>` tag?",
+                "options": ["A. To change the link's color", "B. To tell where the link goes", "C. To make the link bold"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property helps to move an element from its normal position?",
+                "options": ["A. move", "B. relocate", "C. position"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "What is an HTML 'element'?",
+                "options": ["A. A picture", "B. A tag and its content", "C. A color"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property makes text uppercase?",
+                "options": ["A. text-up", "B. text-transform: uppercase", "C. big-letters"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What is the job of the `<head>` section in HTML?",
+                "options": ["A. To hold all the visible content", "B. To hold information about the page, like the title and styles", "C. To make the page beautiful"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property sets the transparency of an element?",
+                "options": ["A. see-through", "B. opacity", "C. transparency-level"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What does a closing HTML tag look like?",
+                "options": ["A. <tag/>", "B. </tag>", "C. <tag end>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property controls how elements are arranged in a row or column?",
+                "options": ["A. arrange", "B. display: flex", "C. layout"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What is the smallest heading tag?",
+                "options": ["A. <h6>", "B. <h10>", "C. <h>"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which CSS property makes a smooth change over time (like a button changing color)?",
+                "options": ["A. smooth-change", "B. animation", "C. C. transition"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "What is a 'selector' in CSS?",
+                "options": ["A. A tool to pick colors", "B. What CSS uses to pick which HTML element to style", "C. A special type of font"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which HTML tag is used for a form?",
+                "options": ["A. <form>", "B. <input>", "C. <submit>"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which CSS property adds a line underneath text?",
+                "options": ["A. underline", "B. text-decoration: underline", "C. line-under"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What type of input is used for a single choice, like in a quiz?",
+                "options": ["A. checkbox", "B. text", "C. radio"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "Which CSS property makes text bold?",
+                "options": ["A. font-weight: bold", "B. text-bold", "C. make-bold"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "What does the `id` attribute do in HTML?",
+                "options": ["A. Gives a unique name to an element", "B. Changes the element's color", "C. Hides the element"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which CSS property changes the space between letters?",
+                "options": ["A. letter-space", "B. character-spacing", "C. letter-spacing"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "What is the main purpose of HTML?",
+                "options": ["A. To make websites look pretty", "B. To give structure and content to a webpage", "C. To make websites interactive"],
+                "correctAnswer": "B"
+            },
+            // --- Additional 50 questions to reach 100 total ---
+            {
+                "question": "Which HTML tag is used to define a table?",
+                "options": ["A. <table>", "B. <tab>", "C. <tr>"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which CSS property controls the order of flexible items in a flex container?",
+                "options": ["A. order", "B. flex-order", "C. arrange-order"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "What HTML attribute specifies an alternate text for an image, if the image cannot be displayed?",
+                "options": ["A. alt", "B. title", "C. src"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which CSS property is used for positioning elements relative to their parent?",
+                "options": ["A. position: absolute", "B. position: relative", "C. display: relative"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which HTML tag is used to create a dropdown list?",
+                "options": ["A. <list>", "B. <select>", "C. <dropdown>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What CSS property would you use to change the text to all capital letters?",
+                "options": ["A. text-transform: uppercase", "B. font-caps", "C. text-style: capitalize"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which HTML element is used to specify a footer for a document or section?",
+                "options": ["A. <footer>", "B. <bottom>", "C. <foot>"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which CSS property is used to control the spacing between lines of text?",
+                "options": ["A. line-height", "B. text-spacing", "C. vertical-align"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "What is the correct HTML for inserting a line break?",
+                "options": ["A. <break>", "B. <lb>", "C. <br>"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "Which CSS property allows you to put multiple background images on an element?",
+                "options": ["A. backgrounds", "B. background-image", "C. multiple-background"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What is the purpose of the `<meta>` tag in HTML?",
+                "options": ["A. To define metadata about an HTML document", "B. To include JavaScript", "C. To create a hyperlink"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which CSS property changes the order of an element in a grid layout?",
+                "options": ["A. grid-order", "B. order", "C. grid-column-start"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which HTML tag is used to define a navigation link?",
+                "options": ["A. <nav>", "B. <navigation>", "C. <navigate>"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "How do you select an element with `id=\"demo\"` in CSS?",
+                "options": ["A. .demo", "B. #demo", "C. demo"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What HTML attribute is used to define inline styles?",
+                "options": ["A. styles", "B. class", "C. style"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "Which CSS property is used to specify the type of cursor to be displayed?",
+                "options": ["A. cursor", "B. mouse-pointer", "C. pointer-type"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which HTML element is used for short quotes?",
+                "options": ["A. <quote>", "B. <q>", "C. <blockquot>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property can hide an element while keeping its space?",
+                "options": ["A. display: none", "B. visibility: hidden", "C. opacity: 0"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which HTML element is used to play audio files?",
+                "options": ["A. <sound>", "B. <audio>", "C. <mp3>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property defines the horizontal and vertical gaps between grid items?",
+                "options": ["A. grid-gap", "B. gap", "C. column-gap"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What is the purpose of the `placeholder` attribute in `<input>`?",
+                "options": ["A. To set a default value", "B. To show a hint in the input field", "C. To define a required field"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS value for `display` makes an element behave like a block-level element and inline-level element?",
+                "options": ["A. block-inline", "B. inline-block", "C. flex"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which HTML element is used for client-side JavaScript?",
+                "options": ["A. <javascript>", "B. <script>", "C. <js>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property controls the space between characters?",
+                "options": ["A. char-spacing", "B. letter-spacing", "C. word-spacing"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which HTML tag is used for a section of content?",
+                "options": ["A. <part>", "B. <section>", "C. <area>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property defines the flexibility of a flex item?",
+                "options": ["A. flex", "B. flex-grow", "C. grow"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which HTML attribute specifies the URL of the page the link goes to?",
+                "options": ["A. url", "B. href", "C. link"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property can apply a visual effect like blur or grayscale?",
+                "options": ["A. effect", "B. filter", "C. graphic-effect"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which HTML element is used for a video file?",
+                "options": ["A. <movie>", "B. <media>", "C. <video>"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "Which CSS property is used to create sticky positioning?",
+                "options": ["A. position: sticky", "B. stick-position", "C. attach: sticky"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "What does the `<ol>` tag represent?",
+                "options": ["A. Ordered List", "B. Old List", "C. Option List"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which CSS pseudo-class matches elements when the user interacts with them, like clicking?",
+                "options": ["A. :active", "B. :click", "C. :press"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which HTML attribute is used to group related input fields?",
+                "options": ["A. <group>", "B. <fieldset>", "C. <form-group>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property is used to specify the background color of a selected text?",
+                "options": ["A. text-highlight-color", "B. selection-background-color", "C. ::selection background-color"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "Which HTML tag is used to define emphasized text?",
+                "options": ["A. <i>", "B. <em>", "C. <italic>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What is the default value of the `position` property in CSS?",
+                "options": ["A. relative", "B. absolute", "C. static"],
+                "correctAnswer": "C"
+            },
+            {
+                "question": "Which HTML element is used to define important text?",
+                "options": ["A. <important>", "B. <strong>", "C. <bold>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property is used to set the type of text decoration (like underline, overline, line-through)?",
+                "options": ["A. text-style", "B. text-decoration", "C. text-line"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which HTML element is used to draw graphics, on the fly, via scripting?",
+                "options": ["A. <canvas>", "B. <graphic>", "C. <draw>"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which CSS property controls how content that is too large for its box is handled?",
+                "options": ["A. overflow", "B. content-overflow", "C. scroll"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "What is the purpose of the `target=\"_blank\"` attribute in an `<a>` tag?",
+                "options": ["A. Opens the linked document in a new window/tab", "B. Opens in the same window", "C. Downloads the linked document"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which CSS property is used to adjust the image within its container, usually for background images?",
+                "options": ["A. background-position", "B. background-align", "C. background-move"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which HTML tag is used to define preformatted text?",
+                "options": ["A. <format>", "B. <pre>", "C. <text-block>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property can be used to set a maximum width for an image, preventing it from overflowing?",
+                "options": ["A. max-width", "B. image-width", "C. fit-width"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which HTML element is used for comments that are not displayed in the browser?",
+                "options": ["A. // Comment //", "B. <!-- Comment -->", "C. <comment>"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property sets the order of overlapping elements?",
+                "options": ["A. layer-index", "B. z-index", "C. depth-order"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which HTML element is used to define a caption for a <figure> element?",
+                "options": ["A. <figcaption>", "B. <figure-caption>", "C. <caption-figure>"],
+                "correctAnswer": "A"
+            },
+            {
+                "question": "Which CSS property controls the shape of the area to which a background is painted?",
+                "options": ["A. background-origin", "B. background-clip", "C. background-shape"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "What is the purpose of the `autofocus` attribute in HTML?",
+                "options": ["A. Automatically submits the form", "B. Automatically places the cursor in the input field when the page loads", "C. Auto-fills the input field"],
+                "correctAnswer": "B"
+            },
+            {
+                "question": "Which CSS property is used to specify a stack of fonts to be used?",
+                "options": ["A. font-stack", "B. font-family", "C. font-collection"],
+                "correctAnswer": "B"
+            }
+        ];
+
+        // Global variables for Firebase and Quiz state
+        let userId = null; // To store the current user's ID
+        let userName = ''; // To store the student's name
+        let isAuthReady = false; // A flag to make sure we wait for Firebase to connect
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = []; // This will hold answers for the 50 selected questions
+        let selectedQuestions = []; // This array will hold the 50 randomly selected questions
+        let timeLeft = 30;
+        let timerInterval;
+
+        // Firebase objects - declared as `let` and initialized to empty objects to prevent 'undefined' errors
+        let app = {};
+        let db = {};
+        let auth = {};
+        let firebaseInitializedSuccessfully = false; // Flag to track if Firebase was truly initialized
+
+        // Array to hold references to question indicator elements
+        let questionIndicators = [];
+
+        // Define admin user IDs (REPLACE WITH ACTUAL ADMIN UIDs IN PRODUCTION FOR SECURITY)
+        // For demonstration, you can put your own Anonymous User ID here after running the app once
+        // and seeing your generated ID in the top-left corner.
+        const adminUserIds = [ "CVKjYGbvCcXrwD229Nn7PN5W98P2"
+            // Example: "your-actual-user-id-goes-here",
+            // Example: "another-firebase-uid-for-admin2"
+        ];
+
+
+        /**
+         * Helper function to create a dummy (mock) Firestore object for when Firebase is not initialized.
+         * This prevents errors when trying to call Firestore methods on an undefined object.
+         */
+        function createDummyFirestore() {
+            return {
+                collection: (path) => ({
+                    addDoc: (data) => {
+                        console.warn(`Firestore (dummy/fallback): Tried to add doc to '${path}' but database is not initialized. Data:`, data);
+                        return Promise.resolve({ id: 'dummy-id' });
+                    },
+                    where: () => ({ // Mock for query chain .where().onSnapshot()
+                        onSnapshot: (callback, errorCallback) => {
+                            console.warn(`Firestore (dummy/fallback): Tried to listen to '${path}' with where() but database is not initialized. No real-time updates.`);
+                            setTimeout(() => callback({ forEach: () => {} }), 100); // Simulate empty snapshot
+                            return () => console.log('Dummy Firestore unsubscribe (via where)');
+                        }
+                    }),
+                    onSnapshot: (callback, errorCallback) => { // Mock for direct .onSnapshot() on collection
+                        console.warn(`Firestore (dummy/fallback): Tried to listen to '${path}' directly but database is not initialized. No real-time updates.`);
+                        setTimeout(() => callback({ forEach: () => {} }), 100); // Simulate empty snapshot
+                        return () => console.log('Dummy Firestore unsubscribe (direct)');
+                    }
+                }),
+                doc: () => ({}), // Mock doc if needed by deleteDoc
+                deleteDoc: (docRef) => {
+                    console.warn(`Firestore (dummy/fallback): Tried to delete doc but database is not initialized.`);
+                    return Promise.resolve();
+                }
+            };
+        }
+
+        /**
+         * Helper function to create a dummy (mock) Auth object for when Firebase is not initialized.
+         * This prevents errors when trying to call Auth methods on an undefined object.
+         */
+        function createDummyAuth() {
+            return {
+                currentUser: null,
+                signInAnonymously: () => {
+                    console.warn("Auth (dummy/fallback): Tried to sign in anonymously but auth is not initialized. Providing dummy user.");
+                    return Promise.resolve({ user: { uid: crypto.randomUUID() } });
+                },
+                signInWithCustomToken: () => Promise.reject("Auth (dummy/fallback): Custom token not supported without Firebase config."),
+                onAuthStateChanged: (callback) => {
+                    const dummyUser = { uid: crypto.randomUUID() };
+                    setTimeout(() => callback(dummyUser), 0); // Call immediately to simulate auth state change
+                    return () => {}; // Return a dummy unsubscribe function
+                }
+            };
+        }
+
+        /**
+         * Initializes Firebase services (app, db, auth) or sets up dummy objects if init fails.
+         * This function is called once when the DOM content is loaded.
+         */
+        function initializeFirebaseServices() {
+            try {
+                // Check if firebaseConfig is provided and has a projectId for actual Firebase init
+                if (firebaseConfig && firebaseConfig.projectId) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    firebaseInitializedSuccessfully = true; // Set to true ONLY if all steps above succeed
+                    console.log("Firebase initialized successfully with provided config.");
+                } else {
+                    console.warn("Firebase configuration is missing or incomplete (projectId not found). Scoreboard features will be disabled.");
+                    app = {}; // Dummy app object
+                    db = createDummyFirestore(); // Create a function for dummy Firestore
+                    auth = createDummyAuth();   // Create a function for dummy Auth
+                }
+            } catch (e) {
+                console.error("Failed to initialize Firebase with provided config:", e);
+                console.warn("Firebase features (scoreboard) will be disabled due to initialization error. Ensure your Firebase project is properly configured and accessible.");
+                firebaseInitializedSuccessfully = false; // Ensure flag is false on error, even if a dummy was assigned
+
+                // Even if `initializeApp` or `getFirestore`/`getAuth` fail, ensure dummy objects are set
+                app = {};
+                db = createDummyFirestore();
+                auth = createDummyAuth();
+            }
+        }
+
+        /**
+         * Fisher-Yates (Knuth) Shuffle algorithm to randomize an array.
+         * @param {Array} array - The array to shuffle.
+         * @returns {Array} The shuffled array.
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+            }
+            return array;
+        }
+
+        // Helper function to escape HTML for display (prevents bad text from breaking our page)
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        // --- ALL JAVASCRIPT LOGIC STARTS AFTER THE DOM IS FULLY LOADED ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Call Firebase Initialization function FIRST and immediately ---
+            initializeFirebaseServices();
+
+            // --- 1. Get ALL HTML Elements by their ID/Class ---
+            // This needs to happen AFTER the DOM is loaded
+            const splashPage = document.getElementById('splash-page');
+            const nameInput = document.getElementById('student-name-input');
+            const startQuizFromSplashButton = document.getElementById('start-quiz-from-splash-button');
+            const currentUserDisplay = document.getElementById('current-user-display');
+            const viewAllScoresButton = document.getElementById('view-all-scores-button');
+
+            const introPage = document.getElementById('intro-page');
+            const startQuizButton = document.getElementById('start-quiz-button');
+            const confirmationModal = document.getElementById('confirmation-modal');
+            const confirmStartButton = document.getElementById('confirm-start-button');
+            const cancelStartButton = document.getElementById('cancel-start-button');
+            const quizContainer = document.querySelector('.quiz-container'); // Note: selector by class
+
+            const questionNumberDisplay = document.getElementById('question-number');
+            const questionDisplay = document.getElementById('question-display');
+            const optionsContainer = document.getElementById('options-container');
+            const feedbackMessage = document.getElementById('feedback-message');
+            const prevButton = document.getElementById('prev-button');
+            const nextButton = document.getElementById('next-button');
+            const submitQuizButton = document.getElementById('submit-quiz-button');
+            const scoreDisplay = document.getElementById('score-display');
+            const timerDisplay = document.getElementById('timer-display');
+
+            const scoreboardPage = document.getElementById('scoreboard-page');
+            const scoreboardList = document.getElementById('scoreboard-list');
+            const backToHomeButton = document.getElementById('back-to-home-button');
+
+            // New elements for Question Indicators and Delete Confirmation
+            const questionIndicatorsContainer = document.getElementById('question-indicators-container');
+            const deleteConfirmationModal = document.getElementById('delete-confirmation-modal');
+            const confirmDeleteButton = document.getElementById('confirm-delete-button');
+            const cancelDeleteButton = document.getElementById('cancel-delete-button');
+
+            let scoreToDeleteDocId = null; // Variable to hold the ID of the score to be deleted
+
+
+            // --- 2. Firebase Authentication Listener ---
+            // This runs as soon as Firebase determines the user's login state.
+            // It's the primary entry point for displaying the initial page.
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid; // User is logged in
+                } else {
+                    // If no user, try anonymous sign-in
+                    try {
+                        // Only try real anonymous sign-in if Firebase was successfully initialized
+                        if (firebaseInitializedSuccessfully) {
+                           await signInAnonymously(auth);
+                           userId = auth.currentUser.uid;
+                        } else {
+                            // Fallback for when Firebase wasn't fully initialized (dummy auth was used)
+                            console.warn("Real Firebase auth not available. Using a random local ID for the user for local functionality.");
+                            userId = crypto.randomUUID(); // Directly assign a new UUID if Firebase is not connected
+                        }
+                    } catch (error) {
+                        // Explicitly handle common Firebase Auth errors
+                        if (error.code === 'auth/admin-restricted-operation') {
+                            console.error("Firebase Authentication Error: Anonymous sign-in is restricted by project settings. Scoreboard will not function with real data. Please ensure 'Anonymous' sign-in method is enabled in Firebase Console > Authentication > Sign-in method, or consider adjusting Identity Platform settings if applicable.");
+                            userId = crypto.randomUUID(); // Still provide a local ID for UI to function
+                        } else if (error.code === 'auth/network-request-failed') {
+                            console.error("Firebase Authentication Error: Network request failed. Please check your internet connection.");
+                            userId = crypto.randomUUID();
+                        } else {
+                            console.error("General error during anonymous sign-in attempt (real or dummy):", error);
+                            userId = crypto.randomUUID();
+                        }
+                    }
+                }
+                isAuthReady = true; // Firebase (or fallback ID) is now ready
+                console.log("Firebase Auth Ready. User ID:", userId);
+                // Log user ID to console for easy copying for admin testing
+                console.log("Current User ID (copy this to `adminUserIds` array in code to test admin features):", userId);
+                displayCurrentUserId(); // Display the user's ID on the screen
+                showSplashPage();       // Show the initial page for name entry
+            });
+
+            // --- 3. Initial Firebase Sign-in Attempt (if auth token exists) ---
+            // This section was for Canvas environment, set to null for local testing.
+            // If you uncomment and want to use custom tokens locally, you'd manage them.
+            // Note: anonymous sign-in is already handled by onAuthStateChanged based on firebaseConfig.projectId
+            if (initialAuthToken && firebaseInitializedSuccessfully) { // Only attempt if token and Firebase is truly initialized
+                 signInWithCustomToken(auth, initialAuthToken).catch((error) => {
+                     console.error("Error signing in with custom token:", error);
+                 });
+            }
+
+
+            // --- 4. Core Quiz Logic Functions ---
+
+            /**
+             * Selects 50 random questions from the allQuestions pool.
+             */
+            function selectRandomQuestions() {
+                const shuffledAllQuestions = shuffleArray([...allQuestions]); // Create a shuffled copy
+                selectedQuestions = shuffledAllQuestions.slice(0, 50); // Take the first 50
+                userAnswers = new Array(selectedQuestions.length).fill(null); // Reset answers for new set
+            }
+
+            /**
+             * Populates the question indicators at the top of the quiz.
+             * Called once when the quiz starts.
+             */
+            function initializeQuestionIndicators() {
+                questionIndicatorsContainer.innerHTML = ''; // Clear existing indicators
+                questionIndicators = []; // Reset array
+                for (let i = 0; i < selectedQuestions.length; i++) { // Use selectedQuestions.length
+                    const indicator = document.createElement('div');
+                    indicator.className = 'question-indicator';
+                    indicator.textContent = i + 1; // Display question number
+                    indicator.dataset.index = i; // Store original index
+
+                    // Add click event listener to navigate to question
+                    indicator.addEventListener('click', () => {
+                        currentQuestionIndex = i; // Set current question to clicked index
+                        loadQuestion(); // Load the new question
+                    });
+
+                    questionIndicatorsContainer.appendChild(indicator);
+                    questionIndicators.push(indicator);
+                }
+                updateQuestionIndicators(); // Set initial states
+            }
+
+            /**
+             * Updates the visual state of question indicators (answered, current).
+             */
+            function updateQuestionIndicators() {
+                questionIndicators.forEach((indicator, index) => {
+                    indicator.classList.remove('current', 'answered'); // Reset classes
+                    if (userAnswers[index] !== null) {
+                        indicator.classList.add('answered'); // Mark as answered
+                    }
+                    if (index === currentQuestionIndex) {
+                        indicator.classList.add('current'); // Mark as current question
+                    }
+                });
+            }
+
+            /**
+             * Starts the timer for the current question.
+             */
+            function startTimer() {
+                stopTimer(); // Clear any existing timer first
+                timeLeft = 30; // Reset time for the new question
+                timerDisplay.textContent = `${timeLeft}s`; // Update display immediately
+                timerDisplay.classList.remove('time-low'); // Reset low-time styling
+
+                timerInterval = setInterval(() => {
+                    timeLeft--; // Count down one second
+                    timerDisplay.textContent = `${timeLeft}s`; // Update timer display
+
+                    if (timeLeft <= 10) { // Add warning style when time is low
+                        timerDisplay.classList.add('time-low');
+                    } else {
+                        timerDisplay.classList.remove('time-low'); // Remove if time goes above 10 again (e.g. prev button)
+                    }
+
+                    if (timeLeft <= 0) {
+                        stopTimer(); // Stop the timer when it reaches 0
+                        // If time runs out, mark the question as unanswered (or incorrect)
+                        // and move to the next question automatically after a short delay
+                        feedbackMessage.textContent = "Time's up! Moving to the next question.";
+                        feedbackMessage.classList.add('feedback-incorrect'); // Show a "time's up" message
+                        feedbackMessage.style.display = 'block';
+
+                        // Disable options when time runs out
+                        const radioButtons = optionsContainer.querySelectorAll('input[type="radio"]');
+                        radioButtons.forEach(radio => {
+                            radio.disabled = true;
+                            radio.parentElement.classList.add('disabled'); // Add disabled style
+                        });
+
+                        // Automatically move to the next question after a brief pause
+                        setTimeout(() => {
+                            nextQuestion();
+                        }, 1500); // Wait 1.5 seconds before moving on
+                    }
+                }, 1000); // Run this function every 1000 milliseconds (1 second)
+            }
+
+            /**
+             * Stops the current question's timer.
+             */
+            function stopTimer() {
+                clearInterval(timerInterval); // Stop the countdown
+            }
+
+            /**
+             * Loads and displays the current question and its options.
+             */
+            function loadQuestion() {
+                // Hide elements from other pages/states
+                scoreDisplay.style.display = 'none';
+                feedbackMessage.style.display = 'none';
+                feedbackMessage.className = 'feedback-message'; // Reset classes
+                timerDisplay.classList.remove('time-low'); // Ensure timer style is reset on new question
+
+                const question = selectedQuestions[currentQuestionIndex]; // Get the current question from our list (from selectedQuestions)
+
+                // Update the question number display
+                questionNumberDisplay.textContent = `Question ${currentQuestionIndex + 1} of ${selectedQuestions.length}`; // Use selectedQuestions.length
+                // Put the question text on the screen
+                questionDisplay.textContent = question.question;
+
+                // Clear out old options before putting new ones
+                optionsContainer.innerHTML = '';
+
+                // Start the timer for the new question, unless it's already answered
+                if (userAnswers[currentQuestionIndex] === null) {
+                    startTimer();
+                } else {
+                    stopTimer(); // If already answered, stop the timer
+                }
+
+                // Go through each option for the current question
+                question.options.forEach((option, index) => {
+                    const optionId = `option${index}`; // Give each option a unique ID
+
+                    // Create a label for our radio button and its text
+                    const label = document.createElement('label');
+                    label.className = 'option-label'; // Add our style to the label
+                    label.setAttribute('for', optionId); // Link label to radio button
+
+                    // Create the radio button
+                    const input = document.createElement('input');
+                    input.type = 'radio'; // It's a radio button (only one choice can be picked)
+                    input.name = 'quiz-option'; // All options for one question have the same name
+                    input.id = optionId; // Set the unique ID
+                    input.value = option.charAt(0); // The value will be 'A', 'B', or 'C'
+
+                    // Create a span to hold the option text
+                    const optionText = document.createElement('span');
+                    optionText.textContent = option; // Put the option text inside
+
+                    // Add the radio button and text to the label
+                    label.appendChild(input);
+                    label.appendChild(optionText);
+
+                    // If the user already answered this question, disable options and check the saved answer
+                    const hasAnswered = userAnswers[currentQuestionIndex] !== null;
+
+                    if (hasAnswered) {
+                        input.disabled = true; // Disable if already answered
+                        label.classList.add('disabled'); // Add disabled style to label
+                        if (userAnswers[currentQuestionIndex] === input.value) {
+                            input.checked = true; // Mark the previously selected answer
+                        }
+                    } else {
+                        // Only add event listener if not already answered
+                        input.addEventListener('change', () => checkAnswer(input.value));
+                    }
+
+                    // Add the whole label (with button and text) to the options container
+                    optionsContainer.appendChild(label);
+                });
+
+                // If question has been answered, display feedback immediately
+                if (userAnswers[currentQuestionIndex] !== null) {
+                    checkAnswer(userAnswers[currentQuestionIndex], true); // Show feedback but don't re-save answer
+                }
+
+                // Update button states (Previous/Next/Submit)
+                updateNavigationButtons();
+                updateQuestionIndicators(); // Update indicators for the new question
+            }
+
+            /**
+             * Checks the selected answer against the correct answer and provides feedback.
+             * @param {string} selectedOption - The option selected by the user (e.g., 'A', 'B', 'C').
+             * @param {boolean} isReLoad - True if this function is called during a page load, false if it's a new user selection.
+             */
+            function checkAnswer(selectedOption, isReLoad = false) {
+                const currentQuestion = selectedQuestions[currentQuestionIndex]; // Use selectedQuestions
+
+                if (!isReLoad) { // Only save the answer if it's a new selection, not a reload
+                    userAnswers[currentQuestionIndex] = selectedOption; // Save the user's answer
+                    stopTimer(); // Stop the timer as soon as an answer is chosen
+                    timerDisplay.classList.remove('time-low'); // Remove low-time styling
+                }
+
+                // Disable all radio buttons for this question after selection, if it's a new selection
+                const radioButtons = optionsContainer.querySelectorAll('input[type="radio"]');
+                radioButtons.forEach(radio => {
+                    radio.disabled = true;
+                    radio.parentElement.classList.add('disabled'); // Add disabled style to label
+                });
+
+                // Remove previous feedback classes
+                feedbackMessage.className = 'feedback-message';
+
+                // Check if the selected answer is correct
+                if (selectedOption === currentQuestion.correctAnswer) {
+                    feedbackMessage.textContent = "That's correct! 🎉";
+                    feedbackMessage.classList.add('feedback-correct');
+                } else {
+                    feedbackMessage.textContent = `Oops! The correct answer was ${currentQuestion.correctAnswer}. 🤔`;
+                    feedbackMessage.classList.add('feedback-incorrect');
+                }
+                feedbackMessage.style.display = 'block'; // Show the feedback message
+                updateQuestionIndicators(); // Update indicators after an answer is checked
+            }
+
+            /**
+             * Moves to the next question in the quiz.
+             */
+            function nextQuestion() {
+                if (currentQuestionIndex < selectedQuestions.length - 1) { // Use selectedQuestions.length
+                    currentQuestionIndex++; // Move to the next question number
+                    loadQuestion(); // Show the new question
+                }
+            }
+
+            /**
+             * Moves to the previous question in the quiz.
+             */
+            function prevQuestion() {
+                if (currentQuestionIndex > 0) {
+                    currentQuestionIndex--; // Move to the previous question number
+                    loadQuestion(); // Show the new question
+                }
+            }
+
+            /**
+             * Updates the enabled/disabled state and visibility of navigation buttons.
+             */
+            function updateNavigationButtons() {
+                // Disable 'Previous' button if on the first question
+                prevButton.disabled = currentQuestionIndex === 0;
+
+                // If on the last question, change 'Next' to 'Submit Quiz'
+                if (currentQuestionIndex === selectedQuestions.length - 1) { // Use selectedQuestions.length
+                    nextButton.classList.add('hidden'); // Hide Next button
+                    submitQuizButton.classList.remove('hidden'); // Show Submit button
+                } else {
+                    nextButton.classList.remove('hidden'); // Show Next button
+                    submitQuizButton.classList.add('hidden'); // Hide Submit button
+                }
+            }
+
+            /**
+             * Submits the quiz, calculates the score, saves it to Firestore, and displays results.
+             */
+            async function submitQuiz() {
+                stopTimer(); // Stop the timer when the quiz is submitted
+                score = 0; // Reset score before calculating
+                // Go through all questions and check user's answers
+                selectedQuestions.forEach((question, index) => { // Iterate over selectedQuestions
+                    if (userAnswers[index] === question.correctAnswer) {
+                        score++; // Add to score if correct
+                    }
+                });
+
+                // Save score to Firestore ONLY if Firebase is genuinely initialized and ready for DB ops
+                if (firebaseInitializedSuccessfully && isAuthReady && userName) {
+                    const scoresCollectionRef = collection(db, `artifacts/${appId}/public/data/quiz_scores`);
+                    try {
+                        await addDoc(scoresCollectionRef, {
+                            name: escapeHTML(userName), // Sanitize name before saving to prevent XSS
+                            score: score,
+                            totalQuestions: selectedQuestions.length, // Use selectedQuestions.length
+                            timestamp: new Date()
+                        });
+                        console.log("Score saved successfully to Firebase!");
+                    } catch (e) {
+                        console.error("Error adding document to Firestore (Scoreboard will not update with this score): ", e);
+                        // Provide more specific feedback for common errors in console
+                        if (e.code === 'permission-denied') {
+                            console.error("Firebase Permission Error: Ensure your Firestore Security Rules allow 'create' and 'update' for authenticated users on 'artifacts/{appId}/public/data/quiz_scores'.");
+                        } else if (e.code === 'unavailable' || e.code === 'unauthenticated') {
+                            console.error("Firebase Connection/Auth Error: Check internet, Firebase project status, and ensure Anonymous Auth is enabled.");
+                        }
+                    }
+                } else {
+                    let reason = [];
+                    if (!firebaseInitializedSuccessfully) reason.push("Firebase not initialized");
+                    if (!isAuthReady) reason.push("Authentication not ready");
+                    if (!userName) reason.push("User name is missing");
+                    console.warn(`Score not saved: ${reason.join(', ')}. Scoreboard will not update for this entry.`);
+                }
+
+                // Display the final score and new buttons
+                scoreDisplay.innerHTML = `
+                    <p>Quiz Complete!</p>
+                    <p class="mt-2">You got <span class="text-blue-700">${score}</span> out of <span class="text-blue-700">${selectedQuestions.length}</span> correct! 🎉</p>
+                    <button id="view-scoreboard-button" class="quiz-button bg-purple-600 hover:bg-purple-700 mt-6">View Scoreboard</button>
+                    <button id="play-again-button" class="quiz-button bg-green-600 hover:bg-green-700 mt-4 ml-2">Play Again!</button>
+                `;
+                scoreDisplay.style.display = 'block'; // Show the score area
+                
+                // Hide quiz elements after submission
+                prevButton.classList.add('hidden');
+                nextButton.classList.add('hidden');
+                submitQuizButton.classList.add('hidden');
+                questionNumberDisplay.classList.add('hidden');
+                questionDisplay.classList.add('hidden');
+                optionsContainer.classList.add('hidden');
+                feedbackMessage.classList.add('hidden');
+                timerDisplay.classList.add('hidden'); // Hide timer
+                questionIndicatorsContainer.classList.add('hidden'); // Hide indicators
+                questionIndicators = []; // Clear indicators array
+
+                // Attach event listeners to the newly created buttons
+                document.getElementById('view-scoreboard-button').addEventListener('click', loadScoreboard);
+                document.getElementById('play-again-button').addEventListener('click', showSplashPage);
+            }
+
+            /**
+             * Prompts for confirmation before deleting a score.
+             * @param {string} docId - The Firestore document ID of the score to delete.
+             */
+            function confirmDeleteScore(docId) {
+                // Only show confirmation if the current user is an admin
+                if (adminUserIds.includes(userId)) {
+                    scoreToDeleteDocId = docId; // Store the ID temporarily
+                    deleteConfirmationModal.classList.remove('hidden'); // Show the delete confirmation modal
+                } else {
+                    alert("You do not have administrative privileges to delete scores.");
+                    console.warn("Attempted to delete score by non-admin user:", userId);
+                }
+            }
+
+            /**
+             * Deletes a score from Firestore.
+             */
+            async function deleteScore() {
+                deleteConfirmationModal.classList.add('hidden'); // Hide modal immediately
+
+                if (!scoreToDeleteDocId) {
+                    console.warn("No score ID to delete.");
+                    return;
+                }
+
+                // Double check admin status before proceeding with deletion
+                if (!adminUserIds.includes(userId)) {
+                    console.error("Security Warning: Non-admin user attempted to bypass client-side delete check for ID:", userId);
+                    alert("Unauthorized: You cannot delete scores.");
+                    scoreToDeleteDocId = null; // Clear the stored ID
+                    return;
+                }
+
+                if (!firebaseInitializedSuccessfully || !isAuthReady) {
+                    console.error("Cannot delete score: Firebase not initialized or authenticated. Check connection/config.");
+                    alert("Failed to delete score. Firebase connection issue.");
+                    scoreToDeleteDocId = null;
+                    return;
+                }
+
+                try {
+                    const docRef = doc(db, `artifacts/${appId}/public/data/quiz_scores`, scoreToDeleteDocId);
+                    await deleteDoc(docRef);
+                    console.log("Score deleted successfully by admin:", scoreToDeleteDocId);
+                    scoreToDeleteDocId = null; // Clear the stored ID
+                    // The onSnapshot listener in loadScoreboard will automatically update the UI
+                } catch (e) {
+                    console.error("Error deleting document:", e);
+                    // Provide user feedback on deletion failure
+                    let errorMessage = "Failed to delete score. Please check Firebase permissions.";
+                    if (e.code === 'permission-denied') {
+                        errorMessage = "Failed to delete score: Insufficient Firebase permissions. Ensure 'delete' is allowed for authenticated users in Firestore rules.";
+                    } else if (e.code === 'unavailable' || e.code === 'unauthenticated') {
+                        errorMessage = "Failed to delete score: Network or authentication issue.";
+                    }
+                    alert(errorMessage);
+                    scoreToDeleteDocId = null; // Clear the stored ID
+                }
+            }
+
+
+            /**
+             * Loads and displays the scoreboard from Firestore.
+             */
+            async function loadScoreboard() {
+                hideAllPages(); // Hide other pages
+                scoreboardPage.classList.remove('hidden'); // Show scoreboard page
+
+                scoreboardList.innerHTML = '<p class="text-gray-600">Loading scores...</p>'; // Show loading message
+
+                // Check if Firestore is genuinely initialized and ready
+                if (!firebaseInitializedSuccessfully) {
+                    scoreboardList.innerHTML = '<p class="text-red-600">Scoreboard not available: Firebase is not properly connected or configured.</p>';
+                    console.error("Scoreboard cannot load: Firebase is not initialized correctly.");
+                    return;
+                }
+
+                if (!isAuthReady) {
+                    scoreboardList.innerHTML = '<p class="text-red-600">Please wait, authenticating with Firebase to load scores...</p>';
+                    return; // Wait for Firebase auth to be ready
+                }
+
+                const scoresCollectionRef = collection(db, `artifacts/${appId}/public/data/quiz_scores`);
+                const q = query(scoresCollectionRef);
+
+                // Listen for real-time updates to the scoreboard
+                // This will automatically update the list if new scores are added or changed in Firestore
+                onSnapshot(q, (snapshot) => {
+                    let scoresData = [];
+                    snapshot.forEach((doc) => {
+                        scoresData.push({ id: doc.id, ...doc.data() }); // Include doc.id for deletion
+                    });
+
+                    // Sort scores: highest score first, then newest timestamp first for ties
+                    scoresData.sort((a, b) => {
+                        if (b.score !== a.score) {
+                            return b.score - a.score; // Sort by score descending
+                        }
+                        // If scores are tied, sort by timestamp (newest first)
+                        // Ensure timestamp is converted to a Date object safely
+                        const dateA = a.timestamp && typeof a.timestamp.toDate === 'function' ? a.timestamp.toDate() : new Date(0);
+                        const dateB = b.timestamp && typeof b.timestamp.toDate === 'function' ? b.timestamp.toDate() : new Date(0);
+                        return dateB.getTime() - dateA.getTime(); // Sort by newest timestamp
+                    });
+
+                    // Display scores in the list
+                    if (scoresData.length === 0) {
+                        scoreboardList.innerHTML = '<p class="text-gray-600">No scores recorded yet! Be the first to play!</p>';
+                    } else {
+                        scoreboardList.innerHTML = ''; // Clear previous entries
+                        const isCurrentUserAdmin = adminUserIds.includes(userId); // Check admin status once
+
+                        scoresData.forEach((data, index) => {
+                            const listItem = document.createElement('li');
+                            // Add special styling for the top score!
+                            const itemClass = index === 0 ? 'bg-yellow-100 font-bold text-yellow-800 border-yellow-400' : 'bg-blue-50 text-blue-800 border-blue-200';
+                            listItem.className = `p-3 rounded-lg mb-2 flex justify-between items-center text-lg border-2 ${itemClass}`;
+                            listItem.innerHTML = `
+                                <span>${index + 1}. ${escapeHTML(data.name)}</span>
+                                <span class="flex items-center">
+                                    Score: ${data.score} / ${data.totalQuestions}
+                                    ${isCurrentUserAdmin ? `
+                                    <button class="delete-score-button ml-4" data-doc-id="${data.id}">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                    </button>
+                                    ` : ''}
+                                </span>
+                            `;
+                            scoreboardList.appendChild(listItem);
+                        });
+
+                        // Attach event listeners to all newly created delete buttons (only if they exist)
+                        if (isCurrentUserAdmin) {
+                            document.querySelectorAll('.delete-score-button').forEach(button => {
+                                button.addEventListener('click', (event) => {
+                                    const docId = event.currentTarget.dataset.docId;
+                                    confirmDeleteScore(docId);
+                                });
+                            });
+                        }
+                    }
+                }, (error) => {
+                    console.error("Error getting scoreboard data:", error);
+                    scoreboardList.innerHTML = `<p class="text-red-600">Error loading scores: ${escapeHTML(error.message)}. Please check Firebase permissions.</p>`;
+                });
+            }
+
+
+            // --- 5. Page Flow Control Functions ---
+
+            /**
+             * Hides all main content pages/containers.
+             */
+            function hideAllPages() {
+                splashPage.classList.add('hidden');
+                introPage.classList.add('hidden');
+                quizContainer.classList.add('hidden');
+                scoreboardPage.classList.add('hidden');
+                confirmationModal.classList.add('hidden'); // Always hide modal unless explicitly shown
+                deleteConfirmationModal.classList.add('hidden'); // Hide delete modal too
+            }
+
+            /**
+             * Shows the initial splash page (name entry screen).
+             * Resets quiz state if returning from a completed quiz.
+             */
+            function showSplashPage() {
+                hideAllPages();
+                splashPage.classList.remove('hidden');
+                // Reset input field and score display (important if returning from quiz end)
+                nameInput.value = userName; // Keep name if already entered for convenience
+                scoreDisplay.style.display = 'none'; // Hide score display
+                
+                // Reset quiz state for a fresh start
+                currentQuestionIndex = 0;
+                score = 0;
+                userAnswers = []; // Reset this, it will be populated based on selected questions
+                stopTimer(); // Ensure timer is off
+
+                // Ensure all quiz specific elements are visible again for the next game (though hidden by quizContainer)
+                questionNumberDisplay.classList.remove('hidden');
+                questionDisplay.classList.remove('hidden');
+                optionsContainer.classList.remove('hidden');
+                feedbackMessage.classList.remove('hidden');
+                timerDisplay.classList.remove('hidden');
+                questionIndicatorsContainer.classList.add('hidden'); // Hide indicators on splash
+            }
+
+            /**
+             * Handles the action when 'Start Your Adventure!' button is clicked.
+             * Validates name and proceeds to introduction page.
+             */
+            function startQuizFromSplash() {
+                const enteredName = nameInput.value.trim();
+                if (enteredName) {
+                    userName = enteredName; // Save the entered name
+                    hideAllPages();
+                    introPage.classList.remove('hidden');
+                } else {
+                    // Provide visual feedback if name is empty
+                    nameInput.placeholder = "Please enter your name!";
+                    nameInput.classList.add('border-red-500'); // Add a red border
+                    setTimeout(() => nameInput.classList.remove('border-red-500'), 1000); // Remove after 1 second
+                }
+            }
+
+            /**
+             * Shows the confirmation modal before starting the quiz.
+             */
+            function showConfirmationModal() {
+                hideAllPages(); // Hide other pages
+                confirmationModal.classList.remove('hidden'); // Show confirmation modal
+            }
+
+            /**
+             * Starts the main quiz sequence after confirmation.
+             */
+            function startGame() {
+                selectRandomQuestions(); // Select 50 random questions for this session
+                hideAllPages();
+                quizContainer.classList.remove('hidden'); // Show the main quiz container
+                questionIndicatorsContainer.classList.remove('hidden'); // Show indicators
+                initializeQuestionIndicators(); // Set up indicators for the first time
+                loadQuestion(); // Start loading the first question
+            }
+
+            /**
+             * Displays the current user's unique ID on the page.
+             */
+            function displayCurrentUserId() {
+                // Only display ID if Firebase is actually configured and we have a real user ID.
+                // Otherwise, the ID will be a random string for local, non-db operation.
+                if (userId && firebaseInitializedSuccessfully) { // Use firebaseInitializedSuccessfully flag
+                    currentUserDisplay.textContent = `Your ID: ${userId}`;
+                    currentUserDisplay.classList.remove('hidden');
+                } else {
+                    currentUserDisplay.classList.add('hidden'); // Hide if no real Firebase connection
+                }
+            }
+
+
+            // --- 6. Event Listeners for Page Flow and Quiz Interaction ---
+
+            // Splash Page Buttons
+            startQuizFromSplashButton.addEventListener('click', startQuizFromSplash);
+            viewAllScoresButton.addEventListener('click', loadScoreboard);
+
+            // Introduction Page Button
+            startQuizButton.addEventListener('click', showConfirmationModal);
+
+            // Confirmation Modal Buttons
+            confirmStartButton.addEventListener('click', startGame);
+            cancelStartButton.addEventListener('click', showSplashPage); // Go back to name entry/splash
+
+            // Quiz Navigation Buttons
+            nextButton.addEventListener('click', nextQuestion);
+            prevButton.addEventListener('click', prevQuestion);
+            submitQuizButton.addEventListener('click', submitQuiz);
+
+            // Scoreboard Page Button
+            backToHomeButton.addEventListener('click', showSplashPage); // Back from scoreboard to splash
+
+            // Delete Confirmation Modal Buttons
+            confirmDeleteButton.addEventListener('click', deleteScore);
+            cancelDeleteButton.addEventListener('click', () => deleteConfirmationModal.classList.add('hidden'));
+        }); // End DOMContentLoaded
+    </script>
+</body>
+</html>
