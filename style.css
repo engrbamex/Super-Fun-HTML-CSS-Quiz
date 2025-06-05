@@ -1,4 +1,4 @@
-     /*
+       /*
          * CUSTOM CSS FOR QUIZ APP
          *
          * This section contains all our special styling that isn't directly from Tailwind.
@@ -479,7 +479,7 @@
          * Tailwind handles a lot, but some custom tweaks are needed.
          * -----------------------------------------------------------------------------
          */
-        @media (max-width: 768px) { /* Adjust for medium screens (tablets) */
+        @media (max-width: 768px) { /* Adjust for medium screens (tabl1ets) */
             .quiz-container, .intro-page-container, .splash-page-container, .confirmation-modal {
                 padding: 30px;
                 border-radius: 20px;
